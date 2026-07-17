@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../models.dart';
+import '../database/app_database.dart';
+import '../database/history_database.dart';
+import '../services/motm_service.dart';
+import '../services/live_session_service.dart';
+import '../widgets/pulsing_dot.dart';
 import 'scorecard_screen.dart';
 
 class MatchScreen extends StatefulWidget {
   final MatchState state;
   final void Function(MatchState)? onMatchComplete;
-  const MatchScreen({super.key, required this.state, this.onMatchComplete});
+  final bool isResuming;
+  const MatchScreen({
+    super.key,
+    required this.state,
+    this.onMatchComplete,
+    this.isResuming = false,
+  });
   @override
   State<MatchScreen> createState() => _MatchScreenState();
 }
@@ -13,6 +25,9 @@ class MatchScreen extends StatefulWidget {
 class _MatchScreenState extends State<MatchScreen>
     with SingleTickerProviderStateMixin {
   MatchState get ms => widget.state;
+
+  // Live broadcast (standalone match only; tournament uses LiveSessionService.activeTournamentCode)
+  String? _liveCode;
 
   late final AnimationController _flashCtrl;
   late final Animation<double> _flashScale;
@@ -45,13 +60,128 @@ class _MatchScreenState extends State<MatchScreen>
       TweenSequenceItem(tween: ConstantTween(1.0), weight: 60),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 25),
     ]).animate(_flashCtrl);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showOpeningSelection());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.isResuming) {
+        _handleResumeState();
+      } else {
+        _showOpeningSelection();
+      }
+    });
   }
 
   @override
   void dispose() {
     _flashCtrl.dispose();
     super.dispose();
+  }
+
+  // ── persist helpers ────────────────────────────────────────────────────────
+
+  void _autoSave() {
+    if (widget.onMatchComplete == null) {
+      if (!ms.matchOver) AppDatabase.saveMatch(ms);
+    }
+    _pushLive();
+  }
+
+  void _pushLive() {
+    final code = _liveCode ?? LiveSessionService.activeTournamentCode;
+    if (code == null) return;
+    // Tick first: ~300 bytes, reaches viewers before the full state write.
+    LiveSessionService.pushLiveTick(code, ms);
+    if (_liveCode != null) {
+      LiveSessionService.pushStandaloneMatch(code, ms);
+    } else {
+      LiveSessionService.pushTournamentCurrentMatch(code, ms);
+    }
+  }
+
+  Future<void> _goLive() async {
+    if (_liveCode != null) {
+      // Already live — show code again
+      _showLiveCodeDialog(_liveCode!);
+      return;
+    }
+    final code = await LiveSessionService.createMatchSession(ms);
+    if (!mounted) return;
+    setState(() => _liveCode = code);
+    _showLiveCodeDialog(code);
+  }
+
+  void _showLiveCodeDialog(String code) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0D2B1E),
+        title: const Text('Live Code',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('Share this code with viewers:',
+              style: TextStyle(color: Colors.white54, fontSize: 13)),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.greenAccent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.greenAccent, width: 2),
+            ),
+            child: Text(code,
+                style: const TextStyle(
+                    color: Colors.greenAccent,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 8)),
+          ),
+          const SizedBox(height: 12),
+          const Text('Viewers open the app → Watch Live → enter this code',
+              style: TextStyle(color: Colors.white38, fontSize: 11),
+              textAlign: TextAlign.center),
+        ]),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: code));
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Code copied!')));
+              }
+            },
+            child: const Text('Copy', style: TextStyle(color: Colors.greenAccent)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              LiveSessionService.endSession(code);
+              if (mounted) setState(() => _liveCode = null);
+            },
+            child: const Text('Stop Live', style: TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close', style: TextStyle(color: Colors.white54)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearSave() {
+    if (widget.onMatchComplete == null) AppDatabase.clearMatch();
+  }
+
+  // On resume, detect whether the game is mid-innings, at an innings break,
+  // or already over and show the correct dialog.
+  void _handleResumeState() {
+    if (ms.matchOver) {
+      _showMatchOver();
+      return;
+    }
+    if (ms.currentInningsObj.isComplete) {
+      _endInnings();
+      return;
+    }
   }
 
   void _showFlash(String label, Color color) {
@@ -72,11 +202,11 @@ class _MatchScreenState extends State<MatchScreen>
         vertical: isNumeric ? 24.0 : 16.0,
       ),
       decoration: BoxDecoration(
-        color: _flashColor.withOpacity(0.9),
+        color: _flashColor.withValues(alpha:0.9),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _flashColor.withOpacity(0.65),
+            color: _flashColor.withValues(alpha:0.65),
             blurRadius: 60,
             spreadRadius: 20,
           ),
@@ -92,7 +222,7 @@ class _MatchScreenState extends State<MatchScreen>
           letterSpacing: isNumeric ? -2.0 : 0.0,
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha:0.4),
               blurRadius: 8,
               offset: const Offset(2, 3),
             ),
@@ -207,6 +337,7 @@ class _MatchScreenState extends State<MatchScreen>
         setEnded = true;
       }
     });
+    _autoSave();
     if (setEnded) _showChangeBowler();
     // Score flash animations
     if (!wide && !bye && !legBye && runs == 6) {
@@ -408,9 +539,9 @@ class _MatchScreenState extends State<MatchScreen>
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade900.withOpacity(0.5),
+                        color: Colors.blue.shade900.withValues(alpha:0.5),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.lightBlueAccent.withOpacity(0.4)),
+                        border: Border.all(color: Colors.lightBlueAccent.withValues(alpha:0.4)),
                       ),
                       child: const Row(children: [
                         Icon(Icons.swap_horiz, color: Colors.lightBlueAccent, size: 16),
@@ -432,7 +563,7 @@ class _MatchScreenState extends State<MatchScreen>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.amber.shade900.withOpacity(0.4),
+                        color: Colors.amber.shade900.withValues(alpha:0.4),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(quotaLabel,
@@ -712,6 +843,7 @@ class _MatchScreenState extends State<MatchScreen>
                   }
                 });
                 Navigator.pop(ctx);
+                _autoSave();
                 if (setEnded) _showChangeBowler();
                 _showFlash('OUT!', Colors.red.shade700);
               },
@@ -933,7 +1065,10 @@ class _MatchScreenState extends State<MatchScreen>
   }
 
   void _showMatchOver() {
+    _clearSave();
+    if (widget.onMatchComplete == null) HistoryDatabase.addMatch(ms);
     widget.onMatchComplete?.call(ms);
+    final mom = MotmService.calculateMotm(ms);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -941,9 +1076,18 @@ class _MatchScreenState extends State<MatchScreen>
         backgroundColor: const Color(0xFF0D2B1E),
         title: const Text('Match Over!',
             style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 24)),
-        content: Text(ms.matchResult,
-            style: const TextStyle(color: Colors.white, fontSize: 18),
-            textAlign: TextAlign.center),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(ms.matchResult,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+                textAlign: TextAlign.center),
+            if (mom != null) ...[
+              const SizedBox(height: 16),
+              _MotmCard(mom: mom, label: 'Man of the Match'),
+            ],
+          ],
+        ),
         actions: [
           ElevatedButton(
             onPressed: () {
@@ -980,6 +1124,29 @@ class _MatchScreenState extends State<MatchScreen>
         title: Text('${ms.battingTeamName} vs ${ms.bowlingTeamName}',
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
         actions: [
+          if (widget.onMatchComplete == null)
+            _liveCode != null
+                ? GestureDetector(
+                    onTap: _goLive,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const PulsingDot(),
+                        const SizedBox(width: 5),
+                        Text(_liveCode!,
+                            style: const TextStyle(
+                                color: Colors.redAccent,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1)),
+                      ]),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.wifi_tethering, color: Colors.white54),
+                    tooltip: 'Go Live',
+                    onPressed: _goLive,
+                  ),
           TextButton.icon(
             onPressed: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => ScorecardScreen(state: ms))),
@@ -1057,7 +1224,7 @@ class _MatchScreenState extends State<MatchScreen>
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
+        border: Border.all(color: Colors.greenAccent.withValues(alpha:0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1106,9 +1273,9 @@ class _MatchScreenState extends State<MatchScreen>
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.amber.shade900.withOpacity(0.3),
+          color: Colors.amber.shade900.withValues(alpha:0.3),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.amber.withOpacity(0.4)),
+          border: Border.all(color: Colors.amber.withValues(alpha:0.4)),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _statPill('Target', '${ms.target}', Colors.amber),
@@ -1127,9 +1294,9 @@ class _MatchScreenState extends State<MatchScreen>
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.blueGrey.shade900.withOpacity(0.4),
+          color: Colors.blueGrey.shade900.withValues(alpha:0.4),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.blueGrey.withOpacity(0.3)),
+          border: Border.all(color: Colors.blueGrey.withValues(alpha:0.3)),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           _statPill('1st Inn Target', '${ms.innings1.totalRuns + 1}', Colors.white70),
@@ -1144,9 +1311,9 @@ class _MatchScreenState extends State<MatchScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.amber.shade900.withOpacity(0.3),
+        color: Colors.amber.shade900.withValues(alpha:0.3),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+        border: Border.all(color: Colors.amber.withValues(alpha:0.4)),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
         _statPill('Target', '${ms.target}', Colors.amber),
@@ -1235,7 +1402,7 @@ class _MatchScreenState extends State<MatchScreen>
   }
 
   TableRow _tableHeader(List<String> cols) => TableRow(
-    decoration: BoxDecoration(color: Colors.green.shade900.withOpacity(0.5)),
+    decoration: BoxDecoration(color: Colors.green.shade900.withValues(alpha:0.5)),
     children: cols.map((c) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       child: Text(c, style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
@@ -1407,10 +1574,10 @@ class _MatchScreenState extends State<MatchScreen>
                     duration: const Duration(milliseconds: 150),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isStumped ? Colors.red.shade900.withOpacity(0.3) : Colors.transparent,
+                      color: isStumped ? Colors.red.shade900.withValues(alpha:0.3) : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: isStumped ? Colors.redAccent.withOpacity(0.5) : Colors.white24),
+                          color: isStumped ? Colors.redAccent.withValues(alpha:0.5) : Colors.white24),
                     ),
                     child: Row(children: [
                       Icon(
@@ -1647,6 +1814,56 @@ class _MatchScreenState extends State<MatchScreen>
             ]),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+class _MotmCard extends StatelessWidget {
+  final MotmResult mom;
+  final String label;
+  const _MotmCard({required this.mom, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            const Icon(Icons.emoji_events, color: Colors.amber, size: 14),
+            const SizedBox(width: 5),
+            Text(label,
+                style: const TextStyle(
+                    color: Colors.amber,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8)),
+          ]),
+          const SizedBox(height: 6),
+          Text(mom.playerName,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text('${mom.teamName} · ${mom.roleLabel}',
+              style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          if (mom.statsLine.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(mom.statsLine,
+                style: const TextStyle(color: Colors.greenAccent, fontSize: 11),
+                textAlign: TextAlign.center),
+          ],
+        ],
       ),
     );
   }

@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'login_screen.dart';
 import 'mode_select_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -114,10 +116,12 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 1350));
     await _exitCtrl.forward();           // exit fade (700ms)
     if (!mounted) return;
+    final isLoggedIn = FirebaseAuth.instance.currentUser != null;
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const ModeSelectScreen(),
+        pageBuilder: (_, __, ___) =>
+            isLoggedIn ? const ModeSelectScreen() : const LoginScreen(),
         transitionDuration: const Duration(milliseconds: 550),
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
@@ -187,7 +191,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.greenAccent.withOpacity(
+                                      color: Colors.greenAccent.withValues(alpha:
                                           _pulseOpacity.value),
                                       width: 2,
                                     ),
@@ -204,7 +208,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.greenAccent.withOpacity(
+                                      color: Colors.greenAccent.withValues(alpha:
                                           _pulseOpacity.value * 0.5),
                                       width: 1,
                                     ),
@@ -222,7 +226,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.greenAccent
-                                            .withOpacity(0.35),
+                                            .withValues(alpha:0.35),
                                         blurRadius: 48,
                                         spreadRadius: 12,
                                       ),
@@ -253,13 +257,13 @@ class _SplashScreenState extends State<SplashScreen>
                                         ),
                                         border: Border.all(
                                           color: Colors.greenAccent
-                                              .withOpacity(0.6),
+                                              .withValues(alpha:0.6),
                                           width: 1.5,
                                         ),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.green
-                                                .withOpacity(0.6),
+                                                .withValues(alpha:0.6),
                                             blurRadius: 28,
                                             spreadRadius: 3,
                                           ),
@@ -307,9 +311,9 @@ class _SplashScreenState extends State<SplashScreen>
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(colors: [
-                                Colors.greenAccent.withOpacity(0),
+                                Colors.greenAccent.withValues(alpha:0),
                                 Colors.greenAccent,
-                                Colors.greenAccent.withOpacity(0),
+                                Colors.greenAccent.withValues(alpha:0),
                               ]),
                             ),
                           ),
@@ -325,7 +329,7 @@ class _SplashScreenState extends State<SplashScreen>
                             child: Text(
                               'SCOREBOARD',
                               style: TextStyle(
-                                color: Colors.greenAccent.withOpacity(0.9),
+                                color: Colors.greenAccent.withValues(alpha:0.9),
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 9,
@@ -373,7 +377,7 @@ class _SplashScreenState extends State<SplashScreen>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.greenAccent
-                                  .withOpacity(0.2 + 0.8 * bright),
+                                  .withValues(alpha:0.2 + 0.8 * bright),
                             ),
                           );
                         }),
@@ -394,7 +398,7 @@ class _RingsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.green.withOpacity(0.05)
+      ..color = Colors.green.withValues(alpha:0.05)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     final cx = size.width / 2;

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1026474899160",
+    "project_id": "scoreboard-b978a",
+    "storage_bucket": "scoreboard-b978a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1026474899160:android:3588841e7dc20214ed49ad",
+        "android_client_info": {
+          "package_name": "com.example.scoreboard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmDt5O1r_2jvfnb-yu7W64PJG_lakKkzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

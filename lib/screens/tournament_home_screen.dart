@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../models.dart';
 import '../tournament_models.dart';
+import '../database/app_database.dart';
+import '../database/history_database.dart';
+import '../services/motm_service.dart';
+import '../services/live_session_service.dart';
+import '../services/template_service.dart';
+import '../services/tournament_history_service.dart';
+import '../widgets/pulsing_dot.dart';
 import 'playing_xi_screen.dart';
 import 'toss_screen.dart';
 
 class TournamentHomeScreen extends StatefulWidget {
   final AnyTournament tournament;
-  const TournamentHomeScreen({super.key, required this.tournament});
+  final String? customTitle;
+  final String? firestoreId; // pass when resuming so history entry is reused
+  const TournamentHomeScreen({
+    super.key,
+    required this.tournament,
+    this.customTitle,
+    this.firestoreId,
+  });
   @override
   State<TournamentHomeScreen> createState() => _TournamentHomeScreenState();
 }
@@ -14,17 +29,95 @@ class TournamentHomeScreen extends StatefulWidget {
 class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
+  late String _firestoreId;
+  int _squadTeamIdx = 0;
+  int _statsCategory = 0;
+  String? _liveCode;
 
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 2, vsync: this);
+    _tab = TabController(length: 4, vsync: this);
+    _firestoreId = widget.firestoreId ?? TournamentHistoryService.newId();
   }
 
   @override
   void dispose() {
     _tab.dispose();
     super.dispose();
+  }
+
+  Future<void> _goLive() async {
+    if (_liveCode != null) {
+      _showLiveCodeDialog(_liveCode!);
+      return;
+    }
+    final code = await LiveSessionService.createTournamentSession(
+      widget.tournament,
+      title: widget.customTitle,
+    );
+    if (!mounted) return;
+    setState(() => _liveCode = code);
+    _showLiveCodeDialog(code);
+  }
+
+  void _showLiveCodeDialog(String code) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0D2B1E),
+        title: const Text('Live Code',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('Share this code with viewers:',
+              style: TextStyle(color: Colors.white54, fontSize: 13)),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.greenAccent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.greenAccent, width: 2),
+            ),
+            child: Text(code,
+                style: const TextStyle(
+                    color: Colors.greenAccent,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 8)),
+          ),
+          const SizedBox(height: 12),
+          const Text('Viewers: open app → Watch Live → enter code',
+              style: TextStyle(color: Colors.white38, fontSize: 11),
+              textAlign: TextAlign.center),
+        ]),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: code));
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Code copied!')));
+              }
+            },
+            child: const Text('Copy', style: TextStyle(color: Colors.greenAccent)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              LiveSessionService.endSession(code);
+              if (mounted) setState(() => _liveCode = null);
+            },
+            child: const Text('Stop Live', style: TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close', style: TextStyle(color: Colors.white54)),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── helpers ───────────────────────────────────────────────────────────────
@@ -51,14 +144,17 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
   TournamentTeam _getTeam(String name) =>
       _allTeams.firstWhere((t) => t.name == name);
 
-  String get _title => switch (widget.tournament) {
-        SeriesHolder h =>
-          '${h.state.teams[0].name} vs ${h.state.teams[1].name} Series',
-        TriSeriesHolder _ => 'Tri-Series',
-        BigTournamentHolder _ => 'Tournament',
-        MultiFormatSeriesHolder h =>
-          '${h.state.team1Name} vs ${h.state.team2Name}',
-      };
+  String get _title {
+    if (widget.customTitle != null) return widget.customTitle!;
+    return switch (widget.tournament) {
+      SeriesHolder h =>
+        '${h.state.teams[0].name} vs ${h.state.teams[1].name} Series',
+      TriSeriesHolder _ => 'Tri-Series',
+      BigTournamentHolder _ => 'Tournament',
+      MultiFormatSeriesHolder h =>
+        '${h.state.team1Name} vs ${h.state.team2Name}',
+    };
+  }
 
   bool get _isOver => switch (widget.tournament) {
         SeriesHolder h => h.state.isComplete,
@@ -99,6 +195,26 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         match.result = ms;
         _tryAdvance();
       });
+      if (_isOver) {
+        AppDatabase.clearTournament();
+        HistoryDatabase.addTournament(widget.tournament);
+        TemplateService.clearTournamentProgress();
+      } else {
+        AppDatabase.saveTournament(widget.tournament);
+        TemplateService.saveTournamentProgress(widget.tournament,
+            title: widget.customTitle, firestoreId: _firestoreId);
+      }
+      TournamentHistoryService.save(
+        _firestoreId,
+        widget.tournament,
+        title: widget.customTitle,
+        isComplete: _isOver,
+      );
+      final code = _liveCode;
+      if (code != null) {
+        LiveSessionService.pushTournamentState(code, widget.tournament,
+            title: widget.customTitle);
+      }
     }
 
     // Full squad (18–21 players): show Playing XI selection before the toss
@@ -176,12 +292,37 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         title: Text(_title,
             style: const TextStyle(
                 color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+        actions: [
+          if (!_isOver)
+            _liveCode != null
+                ? GestureDetector(
+                    onTap: _goLive,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const PulsingDot(),
+                        const SizedBox(width: 5),
+                        Text(_liveCode!,
+                            style: const TextStyle(
+                                color: Colors.redAccent,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1)),
+                      ]),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.wifi_tethering, color: Colors.white54),
+                    tooltip: 'Go Live',
+                    onPressed: _goLive,
+                  ),
+        ],
         bottom: TabBar(
           controller: _tab,
           labelColor: Colors.greenAccent,
           unselectedLabelColor: Colors.white54,
           indicatorColor: Colors.greenAccent,
-          tabs: const [Tab(text: 'Schedule'), Tab(text: 'Standings')],
+          tabs: const [Tab(text: 'Schedule'), Tab(text: 'Standings'), Tab(text: 'Squads'), Tab(text: 'Stats')],
         ),
       ),
       body: Column(children: [
@@ -189,7 +330,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-            color: Colors.amber.shade900.withOpacity(0.4),
+            color: Colors.amber.shade900.withValues(alpha:0.4),
             child: Text(_resultBanner,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
@@ -197,10 +338,11 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                     fontSize: 15,
                     fontWeight: FontWeight.bold)),
           ),
+        if (_isOver) _buildMottBanner(),
         Expanded(
           child: TabBarView(
             controller: _tab,
-            children: [_buildSchedule(), _buildStandings()],
+            children: [_buildSchedule(), _buildStandings(), _buildSquads(), _buildStats()],
           ),
         ),
       ]),
@@ -370,7 +512,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
             color: playable
-                ? Colors.greenAccent.withOpacity(0.35)
+                ? Colors.greenAccent.withValues(alpha:0.35)
                 : Colors.white10),
       ),
       child: Row(children: [
@@ -509,10 +651,10 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade900.withOpacity(0.25),
+                  color: Colors.amber.shade900.withValues(alpha:0.25),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: Colors.amber.withOpacity(0.4)),
+                      color: Colors.amber.withValues(alpha:0.4)),
                 ),
                 child: Text(state.seriesResult,
                     textAlign: TextAlign.center,
@@ -589,7 +731,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         children: [
           TableRow(
             decoration:
-                BoxDecoration(color: Colors.green.shade900.withOpacity(0.5)),
+                BoxDecoration(color: Colors.green.shade900.withValues(alpha:0.5)),
             children: ['Team', 'P', 'W', 'L', 'T', 'NRR', 'Pts']
                 .map((h) => _th(h))
                 .toList(),
@@ -600,9 +742,9 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             return TableRow(
               decoration: BoxDecoration(
                   color: isFirst
-                      ? Colors.greenAccent.withOpacity(0.06)
+                      ? Colors.greenAccent.withValues(alpha:0.06)
                       : e.key.isOdd
-                          ? Colors.white.withOpacity(0.02)
+                          ? Colors.white.withValues(alpha:0.02)
                           : Colors.transparent),
               children: [
                 _td(s.teamName, bold: true),
@@ -651,9 +793,9 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             padding: const EdgeInsets.all(14),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.amber.shade900.withOpacity(0.25),
+              color: Colors.amber.shade900.withValues(alpha:0.25),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.amber.withOpacity(0.4)),
+              border: Border.all(color: Colors.amber.withValues(alpha:0.4)),
             ),
             child: Text(state.overallResult,
                 textAlign: TextAlign.center,
@@ -673,7 +815,667 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     );
   }
 
+  // ── stats tab ─────────────────────────────────────────────────────────────
+
+  static const _kStatCats = [
+    (0, 'Most Runs',     true ),
+    (1, 'Highest Score', true ),
+    (2, 'Most Fours',    true ),
+    (3, 'Most Sixes',    true ),
+    (4, 'Most Hundreds', true ),
+    (5, 'Most Fifties',  true ),
+    (6, 'Most Wickets',  false),
+    (7, 'Most 5W Hauls', false),
+    (8, 'Best Bowling',  false),
+  ];
+
+  List<TournamentMatch> get _allPlayedMatches {
+    final out = <TournamentMatch>[];
+    switch (widget.tournament) {
+      case SeriesHolder h:
+        out.addAll(h.state.matches.where((m) => m.isPlayed));
+      case TriSeriesHolder h:
+        out.addAll(h.state.leagueMatches.where((m) => m.isPlayed));
+        if (h.state.finalMatch?.isPlayed == true) out.add(h.state.finalMatch!);
+      case BigTournamentHolder h:
+        out.addAll(h.state.phase1Schedule.where((m) => m.isPlayed));
+        out.addAll(h.state.phase2Schedule.where((m) => m.isPlayed));
+        if (h.state.sf1?.isPlayed == true) out.add(h.state.sf1!);
+        if (h.state.sf2?.isPlayed == true) out.add(h.state.sf2!);
+        if (h.state.finalMatch?.isPlayed == true) out.add(h.state.finalMatch!);
+      case MultiFormatSeriesHolder h:
+        for (final seg in h.state.segments) {
+          out.addAll(seg.matches.where((m) => m.isPlayed));
+        }
+    }
+    return out;
+  }
+
+  Widget _buildMottBanner() {
+    final mott = MotmService.calculateMott(_allPlayedMatches);
+    if (mott == null) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      color: Colors.deepPurple.shade900.withValues(alpha: 0.45),
+      child: Row(children: [
+        const Icon(Icons.emoji_events, color: Colors.amberAccent, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Man of the Tournament',
+                style: TextStyle(
+                    color: Colors.amberAccent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8)),
+            const SizedBox(height: 2),
+            Text('${mott.playerName}  ·  ${mott.teamName}  ·  ${mott.roleLabel}',
+                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+            if (mott.statsLine.isNotEmpty)
+              Text(mott.statsLine,
+                  style: const TextStyle(color: Colors.white60, fontSize: 11)),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  Map<String, _PA> _computeStats() {
+    final map = <String, _PA>{};
+    for (final match in _allPlayedMatches) {
+      final ms = match.result!;
+      void process(List<Player> players, String teamName) {
+        for (final p in players) {
+          final key = '$teamName\x00${p.name}';
+          final agg = map.putIfAbsent(key, () => _PA(p.name, teamName));
+          agg.matches++;
+          if (p.hasPlayedInnings) {
+            agg.innings++;
+            agg.totalRuns += p.runsScored;
+            agg.totalBalls += p.ballsFaced;
+            agg.fours += p.fours;
+            agg.sixes += p.sixes;
+            if (p.runsScored >= 100) {
+              agg.hundreds++;
+            } else if (p.runsScored >= 50) {
+              agg.fifties++;
+            }
+            if (p.runsScored > agg.highScore) agg.highScore = p.runsScored;
+            if (p.isOut) agg.dismissals++;
+          }
+          if (p.ballsBowled > 0) {
+            agg.wickets += p.wicketsTaken;
+            agg.runsConceded += p.runsConceded;
+            agg.ballsBowled += p.ballsBowled;
+            if (p.wicketsTaken >= 5) agg.fiveWickets++;
+            if (p.wicketsTaken > agg.bestWkts ||
+                (p.wicketsTaken == agg.bestWkts &&
+                    p.wicketsTaken > 0 &&
+                    p.runsConceded < agg.bestRuns)) {
+              agg.bestWkts = p.wicketsTaken;
+              agg.bestRuns = p.runsConceded;
+            }
+          }
+        }
+      }
+      process(ms.team1Players, ms.setup.team1Name);
+      process(ms.team2Players, ms.setup.team2Name);
+    }
+    return map;
+  }
+
+  Widget _buildStats() {
+    final allStats = _computeStats().values.toList();
+
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      // ── left sidebar ──────────────────────────────────────────────────
+      Container(
+        width: 110,
+        color: const Color(0xFF081A11),
+        child: ListView(children: [
+          _statGroupHeader('Batting'),
+          for (final cat in _kStatCats.where((c) => c.$3))
+            _statCategoryTile(cat.$1, cat.$2),
+          const SizedBox(height: 8),
+          _statGroupHeader('Bowling'),
+          for (final cat in _kStatCats.where((c) => !c.$3))
+            _statCategoryTile(cat.$1, cat.$2),
+          const SizedBox(height: 16),
+        ]),
+      ),
+      // ── right table ───────────────────────────────────────────────────
+      Expanded(
+        child: allStats.isEmpty
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Text(
+                    'Play some matches to\nsee stats here',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                  ),
+                ),
+              )
+            : _buildStatsTable(allStats),
+      ),
+    ]);
+  }
+
+  Widget _statGroupHeader(String label) => Padding(
+        padding: const EdgeInsets.fromLTRB(10, 14, 10, 4),
+        child: Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+              color: Colors.greenAccent,
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.3),
+        ),
+      );
+
+  Widget _statCategoryTile(int idx, String label) {
+    final sel = _statsCategory == idx;
+    return GestureDetector(
+      onTap: () => setState(() => _statsCategory = idx),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: sel
+              ? const Color(0xFF1B5E20).withValues(alpha: 0.55)
+              : Colors.transparent,
+          border: sel
+              ? const Border(
+                  left: BorderSide(color: Colors.greenAccent, width: 3))
+              : const Border(
+                  left: BorderSide(color: Colors.transparent, width: 3)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: sel ? Colors.white : Colors.white38,
+            fontSize: 11,
+            fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+            height: 1.3,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsTable(List<_PA> all) {
+    final sorted = List<_PA>.from(all);
+
+    var headers = <String>[];
+    var colW = <double>[];
+    var primIdx = 0;
+    List<String> Function(_PA) vals = (_) => [];
+
+    switch (_statsCategory) {
+      case 0: // Most Runs
+        sorted.sort((a, b) => b.totalRuns != a.totalRuns
+            ? b.totalRuns.compareTo(a.totalRuns)
+            : a.totalBalls.compareTo(b.totalBalls));
+        headers = ['M', 'RUNS', 'AVG', 'SR'];
+        colW = [28.0, 42.0, 46.0, 44.0];
+        primIdx = 1;
+        vals = (p) => [
+              '${p.matches}',
+              '${p.totalRuns}',
+              p.dismissals == 0
+                  ? '${p.totalRuns}'
+                  : (p.totalRuns / p.dismissals).toStringAsFixed(1),
+              p.batSR.toStringAsFixed(1),
+            ];
+
+      case 1: // Highest Score
+        sorted.sort((a, b) => b.highScore.compareTo(a.highScore));
+        headers = ['HS', 'RUNS', 'AVG'];
+        colW = [38.0, 44.0, 48.0];
+        primIdx = 0;
+        vals = (p) => [
+              '${p.highScore}',
+              '${p.totalRuns}',
+              p.dismissals == 0
+                  ? '-'
+                  : (p.totalRuns / p.dismissals).toStringAsFixed(1),
+            ];
+
+      case 2: // Most Fours
+        sorted.sort((a, b) => b.fours != a.fours
+            ? b.fours.compareTo(a.fours)
+            : b.totalRuns.compareTo(a.totalRuns));
+        headers = ['M', 'INN', '4s', 'RUNS'];
+        colW = [28.0, 32.0, 34.0, 44.0];
+        primIdx = 2;
+        vals = (p) =>
+            ['${p.matches}', '${p.innings}', '${p.fours}', '${p.totalRuns}'];
+
+      case 3: // Most Sixes
+        sorted.sort((a, b) => b.sixes != a.sixes
+            ? b.sixes.compareTo(a.sixes)
+            : b.totalRuns.compareTo(a.totalRuns));
+        headers = ['M', 'INN', '6s', 'RUNS'];
+        colW = [28.0, 32.0, 34.0, 44.0];
+        primIdx = 2;
+        vals = (p) =>
+            ['${p.matches}', '${p.innings}', '${p.sixes}', '${p.totalRuns}'];
+
+      case 4: // Most Hundreds
+        sorted.removeWhere((p) => p.hundreds == 0);
+        sorted.sort((a, b) => b.hundreds != a.hundreds
+            ? b.hundreds.compareTo(a.hundreds)
+            : b.totalRuns.compareTo(a.totalRuns));
+        headers = ['M', '100s', '50s', 'RUNS'];
+        colW = [28.0, 36.0, 32.0, 44.0];
+        primIdx = 1;
+        vals = (p) => [
+              '${p.matches}',
+              '${p.hundreds}',
+              '${p.fifties}',
+              '${p.totalRuns}'
+            ];
+
+      case 5: // Most Fifties
+        sorted.removeWhere((p) => p.fifties == 0);
+        sorted.sort((a, b) => b.fifties != a.fifties
+            ? b.fifties.compareTo(a.fifties)
+            : b.totalRuns.compareTo(a.totalRuns));
+        headers = ['M', '50s', '100s', 'RUNS'];
+        colW = [28.0, 36.0, 36.0, 44.0];
+        primIdx = 1;
+        vals = (p) => [
+              '${p.matches}',
+              '${p.fifties}',
+              '${p.hundreds}',
+              '${p.totalRuns}'
+            ];
+
+      case 6: // Most Wickets
+        sorted.removeWhere((p) => p.wickets == 0);
+        sorted.sort((a, b) => b.wickets != a.wickets
+            ? b.wickets.compareTo(a.wickets)
+            : a.bowlAvg.compareTo(b.bowlAvg));
+        headers = ['M', 'WKTS', 'AVG', 'ECO'];
+        colW = [28.0, 38.0, 44.0, 40.0];
+        primIdx = 1;
+        vals = (p) => [
+              '${p.matches}',
+              '${p.wickets}',
+              p.wickets == 0 ? '-' : p.bowlAvg.toStringAsFixed(1),
+              p.economy.toStringAsFixed(2),
+            ];
+
+      case 7: // Most 5W Hauls
+        sorted.removeWhere((p) => p.fiveWickets == 0);
+        sorted.sort((a, b) => b.fiveWickets != a.fiveWickets
+            ? b.fiveWickets.compareTo(a.fiveWickets)
+            : b.wickets.compareTo(a.wickets));
+        headers = ['M', '5W', 'WKTS', 'ECO'];
+        colW = [28.0, 32.0, 38.0, 40.0];
+        primIdx = 1;
+        vals = (p) => [
+              '${p.matches}',
+              '${p.fiveWickets}',
+              '${p.wickets}',
+              p.economy.toStringAsFixed(2)
+            ];
+
+      default: // case 8: Best Bowling
+        sorted.removeWhere((p) => p.wickets == 0);
+        sorted.sort((a, b) => a.bestWkts != b.bestWkts
+            ? b.bestWkts.compareTo(a.bestWkts)
+            : a.bestRuns.compareTo(b.bestRuns));
+        headers = ['BBI', 'WKTS', 'ECO'];
+        colW = [42.0, 38.0, 40.0];
+        primIdx = 0;
+        vals = (p) => [
+              '${p.bestWkts}/${p.bestRuns == 9999 ? "-" : p.bestRuns}',
+              '${p.wickets}',
+              p.economy.toStringAsFixed(2),
+            ];
+    }
+
+    if (sorted.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text('No data yet for this category',
+              style: TextStyle(color: Colors.white54, fontSize: 13)),
+        ),
+      );
+    }
+
+    Widget hCell(String t, double w, bool prime) => SizedBox(
+          width: w,
+          child: Text(t,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                  color: prime ? Colors.greenAccent : Colors.white38,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold)),
+        );
+
+    Widget dCell(String t, double w, bool prime) => SizedBox(
+          width: w,
+          child: Text(t,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                  color: prime ? Colors.greenAccent : Colors.white70,
+                  fontSize: 12,
+                  fontWeight: prime ? FontWeight.bold : FontWeight.normal)),
+        );
+
+    return Column(children: [
+      // Header
+      Container(
+        color: const Color(0xFF0A2218),
+        padding: const EdgeInsets.fromLTRB(8, 8, 10, 8),
+        child: Row(children: [
+          const SizedBox(
+              width: 20,
+              child: Text('#',
+                  style: TextStyle(
+                      color: Colors.white38,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold))),
+          const SizedBox(width: 6),
+          const Expanded(
+              child: Text('PLAYER',
+                  style: TextStyle(
+                      color: Colors.white38,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold))),
+          for (int ci = 0; ci < headers.length; ci++)
+            hCell(headers[ci], colW[ci], ci == primIdx),
+        ]),
+      ),
+      const Divider(height: 1, color: Colors.white10),
+      // Rows
+      Expanded(
+        child: ListView.separated(
+          itemCount: sorted.length,
+          separatorBuilder: (_, __) =>
+              const Divider(height: 1, color: Colors.white10),
+          itemBuilder: (_, i) {
+            final p = sorted[i];
+            final v = vals(p);
+            return Container(
+              color: i.isEven
+                  ? const Color(0xFF0D2218)
+                  : const Color(0xFF0A1E15),
+              padding: const EdgeInsets.fromLTRB(8, 8, 10, 8),
+              child: Row(children: [
+                SizedBox(
+                  width: 20,
+                  child: Text('${i + 1}',
+                      style: TextStyle(
+                          color: i < 3 ? Colors.amber : Colors.white38,
+                          fontSize: 11,
+                          fontWeight:
+                              i < 3 ? FontWeight.bold : FontWeight.normal)),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(p.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold)),
+                        Text(p.team,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                color: Colors.white38, fontSize: 10)),
+                      ]),
+                ),
+                for (int ci = 0; ci < v.length; ci++)
+                  dCell(v[ci], colW[ci], ci == primIdx),
+              ]),
+            );
+          },
+        ),
+      ),
+    ]);
+  }
+
+  // ── squads tab ────────────────────────────────────────────────────────────
+
+  Widget _buildSquads() {
+    final teams = _allTeams;
+    if (teams.isEmpty) {
+      return const Center(
+          child: Text('No squads', style: TextStyle(color: Colors.white54)));
+    }
+
+    // Clamp index in case teams shrink
+    final idx = _squadTeamIdx.clamp(0, teams.length - 1);
+    final team = teams[idx];
+
+    final wks = team.players.where((p) => p.isWicketKeeper).toList();
+    final batters = team.players
+        .where((p) => !p.isWicketKeeper && p.role == PlayerRole.batter)
+        .toList();
+    final allRounders =
+        team.players.where((p) => p.role == PlayerRole.allRounder).toList();
+    final bowlers = team.players
+        .where((p) => p.role == PlayerRole.bowler && !p.isWicketKeeper)
+        .toList();
+
+    return Column(children: [
+      // ── Team selector ──────────────────────────────────────────────────
+      Container(
+        color: const Color(0xFF0A2218),
+        height: 46,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          itemCount: teams.length,
+          itemBuilder: (_, i) {
+            final sel = i == idx;
+            return GestureDetector(
+              onTap: () => setState(() => _squadTeamIdx = i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                margin: const EdgeInsets.only(right: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: sel ? Colors.greenAccent : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: sel ? Colors.greenAccent : Colors.white30),
+                ),
+                child: Text(
+                  teams[i].name,
+                  style: TextStyle(
+                    color: sel ? const Color(0xFF0D2B1E) : Colors.white70,
+                    fontWeight:
+                        sel ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+
+      // ── Player list ────────────────────────────────────────────────────
+      Expanded(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
+          children: [
+            if (batters.isNotEmpty) ...[
+              _squadRoleHeader('BATTERS', Icons.sports_cricket,
+                  Colors.green.shade300),
+              ..._playerPairs(batters),
+              const SizedBox(height: 4),
+            ],
+            if (allRounders.isNotEmpty) ...[
+              _squadRoleHeader('ALL-ROUNDERS', Icons.swap_horiz,
+                  Colors.purple.shade300),
+              ..._playerPairs(allRounders),
+              const SizedBox(height: 4),
+            ],
+            if (wks.isNotEmpty) ...[
+              _squadRoleHeader(
+                  'WICKET KEEPERS', Icons.sports_cricket, Colors.blue.shade300),
+              ..._playerPairs(wks),
+              const SizedBox(height: 4),
+            ],
+            if (bowlers.isNotEmpty) ...[
+              _squadRoleHeader('BOWLERS', Icons.offline_bolt,
+                  Colors.orange.shade300),
+              ..._playerPairs(bowlers),
+            ],
+          ],
+        ),
+      ),
+    ]);
+  }
+
+  Widget _squadRoleHeader(String label, IconData icon, Color color) => Padding(
+        padding: const EdgeInsets.only(top: 14, bottom: 8),
+        child: Row(children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: 6),
+          Text(label,
+              style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.4)),
+        ]),
+      );
+
+  List<Widget> _playerPairs(List<PlayerInfo> players) {
+    final rows = <Widget>[];
+    for (int i = 0; i < players.length; i += 2) {
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: _squadPlayerCard(players[i])),
+          const SizedBox(width: 8),
+          i + 1 < players.length
+              ? Expanded(child: _squadPlayerCard(players[i + 1]))
+              : const Expanded(child: SizedBox()),
+        ],
+      ));
+      rows.add(const SizedBox(height: 8));
+    }
+    return rows;
+  }
+
+  Widget _squadPlayerCard(PlayerInfo p) {
+    final isC = p.isCaptain;
+    final isWK = p.isWicketKeeper;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D2B1E),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            color: isC
+                ? Colors.amber.withValues(alpha: 0.35)
+                : Colors.white.withValues(alpha: 0.07)),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        // Avatar circle
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: isC
+                ? Colors.amber.withValues(alpha: 0.18)
+                : Colors.white.withValues(alpha: 0.06),
+            shape: BoxShape.circle,
+            border: Border.all(
+                color: isC
+                    ? Colors.amber.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.1)),
+          ),
+          child: Center(
+            child: isC
+                ? const Icon(Icons.star_rounded,
+                    color: Colors.amber, size: 18)
+                : isWK
+                    ? const Icon(Icons.sports_cricket,
+                        color: Colors.lightBlueAccent, size: 17)
+                    : Icon(Icons.person,
+                        color: Colors.white.withValues(alpha: 0.35), size: 19),
+          ),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Name row
+                Row(children: [
+                  Flexible(
+                    child: Text(
+                      isC ? '${p.name} (C)' : p.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isC ? Colors.amber : Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  if (isWK) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1565C0),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: const Text('WK',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ]),
+                const SizedBox(height: 2),
+                Text(_roleLabel(p),
+                    style: const TextStyle(
+                        color: Colors.white54, fontSize: 11)),
+              ]),
+        ),
+      ]),
+    );
+  }
+
+  String _roleLabel(PlayerInfo p) {
+    if (p.isWicketKeeper) return 'Wicket Keeper';
+    switch (p.role) {
+      case PlayerRole.batter:
+        return 'Batter';
+      case PlayerRole.bowler:
+        return p.bowlerType == BowlerType.fast
+            ? 'Fast Bowler'
+            : 'Spin Bowler';
+      case PlayerRole.allRounder:
+        return p.bowlerType == BowlerType.fast
+            ? 'Batting Allrounder'
+            : 'Bowling Allrounder';
+    }
+  }
+
   Widget _segmentStandingCard(FormatSegment seg) {
+
     final w1 = seg.winsFor(seg.team1Name);
     final w2 = seg.winsFor(seg.team2Name);
     final winner = seg.winner;
@@ -710,8 +1512,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: winner.isEmpty
-                  ? Colors.grey.shade800.withOpacity(0.3)
-                  : Colors.green.shade800.withOpacity(0.3),
+                  ? Colors.grey.shade800.withValues(alpha: 0.3)
+                  : Colors.green.shade800.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(seg.resultText,
@@ -725,4 +1527,38 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
       ]),
     );
   }
+}
+
+// ── Player aggregate for tournament-wide stats ────────────────────────────────
+
+class _PA {
+  final String name;
+  final String team;
+
+  int matches = 0;
+
+  // Batting
+  int innings = 0;
+  int totalRuns = 0;
+  int totalBalls = 0;
+  int fours = 0;
+  int sixes = 0;
+  int hundreds = 0;
+  int fifties = 0;
+  int highScore = 0;
+  int dismissals = 0;
+
+  // Bowling
+  int wickets = 0;
+  int runsConceded = 0;
+  int ballsBowled = 0;
+  int fiveWickets = 0;
+  int bestWkts = 0;
+  int bestRuns = 9999;
+
+  _PA(this.name, this.team);
+
+  double get batSR => totalBalls == 0 ? 0 : totalRuns / totalBalls * 100;
+  double get bowlAvg => wickets == 0 ? 0 : runsConceded / wickets;
+  double get economy => ballsBowled == 0 ? 0 : runsConceded / ballsBowled * 6;
 }

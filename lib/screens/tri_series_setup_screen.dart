@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../tournament_models.dart';
+import '../saved_template.dart';
+import '../services/template_service.dart';
 import 'squad_entry.dart';
 import 'tournament_home_screen.dart';
 
 class TriSeriesSetupScreen extends StatefulWidget {
-  const TriSeriesSetupScreen({super.key});
+  final String? templateName;
+  const TriSeriesSetupScreen({super.key, this.templateName});
   @override
   State<TriSeriesSetupScreen> createState() => _TriSeriesSetupScreenState();
 }
@@ -55,25 +58,46 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
       MatchFormat.odi => 50,
       _ => 20,
     };
+    final players = List.generate(3, (i) => _squads[i].map((p) => p.toInfo()).toList());
     final state = TriSeriesState(
-      teams: List.generate(3, (i) => TournamentTeam(
-        name: names[i],
-        players: _squads[i].map((p) => p.toInfo()).toList(),
-      )),
+      teams: List.generate(3, (i) => TournamentTeam(name: names[i], players: players[i])),
       overs: overs,
       format: _format,
     );
+
+    final tName = widget.templateName ?? names.join(' / ');
+    final now = DateTime.now().millisecondsSinceEpoch;
+    TemplateService.save(SavedTemplate(
+      id: TemplateService.newId(),
+      name: tName,
+      type: 'triseries',
+      teams: List.generate(3, (i) => TemplateTeam(name: names[i], players: players[i])),
+      format: _format,
+      createdAt: now,
+      updatedAt: now,
+    ));
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/tournament'),
-        builder: (_) => TournamentHomeScreen(tournament: TriSeriesHolder(state)),
+        builder: (_) => TournamentHomeScreen(
+          tournament: TriSeriesHolder(state),
+          customTitle: '$tName – Season 1',
+        ),
       ),
     );
   }
 
   void _snack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+
+  Future<void> _loadTeam(
+      BuildContext ctx, TextEditingController nameCtrl, List<PlayerSetupData> squad) async {
+    final team = await showTeamPickerSheet(ctx);
+    if (team == null) return;
+    applyTeamToSquad(team: team, squad: squad, nameCtrl: nameCtrl, setState: setState);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +132,7 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
               Colors.purple.shade700,
             ][i];
             return Column(children: [
-              _teamHeader(_names[i], accent),
+              _teamHeader(_names[i], accent, sq),
               Expanded(
                   child: SquadEntryWidget(
                       players: sq,
@@ -239,16 +263,30 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
     );
   }
 
-  Widget _teamHeader(TextEditingController ctrl, Color color) =>
+  Widget _teamHeader(TextEditingController ctrl, Color color, List<PlayerSetupData> squad) =>
       ValueListenableBuilder(
         valueListenable: ctrl,
-        builder: (_, __, ___) => Container(
+        builder: (ctx, __, ___) => Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          color: color.withOpacity(0.3),
-          child: Text(ctrl.text.isEmpty ? 'Team' : ctrl.text,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          color: color.withValues(alpha: 0.3),
+          child: Row(children: [
+            Expanded(
+              child: Text(ctrl.text.isEmpty ? 'Team' : ctrl.text,
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white70,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.file_download_outlined, size: 15),
+              label: const Text('Load', style: TextStyle(fontSize: 12)),
+              onPressed: () => _loadTeam(ctx, ctrl, squad),
+            ),
+          ]),
         ),
       );
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../tournament_models.dart';
+import '../saved_template.dart';
+import '../services/template_service.dart';
 import 'squad_entry.dart';
 import 'tournament_home_screen.dart';
 
@@ -33,7 +35,8 @@ List<_Preset> _presetsFor(int teams) {
 }
 
 class BigTournamentSetupScreen extends StatefulWidget {
-  const BigTournamentSetupScreen({super.key});
+  final String? templateName;
+  const BigTournamentSetupScreen({super.key, this.templateName});
   @override
   State<BigTournamentSetupScreen> createState() =>
       _BigTournamentSetupScreenState();
@@ -107,6 +110,17 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
   void _snack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
+  Future<void> _loadTeam(int teamIdx) async {
+    final team = await showTeamPickerSheet(context);
+    if (team == null) return;
+    applyTeamToSquad(
+      team: team,
+      squad: _squads[teamIdx],
+      nameCtrl: _nameCtrl[teamIdx],
+      setState: setState,
+    );
+  }
+
   void _nextStep() {
     // Validate current step
     if (_step == 0) {
@@ -179,12 +193,32 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
       groupAssignments: assignments,
     );
 
+    final tName = widget.templateName ?? '$_numTeams-Team Tournament';
+    final now = DateTime.now().millisecondsSinceEpoch;
+    TemplateService.save(SavedTemplate(
+      id: TemplateService.newId(),
+      name: tName,
+      type: 'tournament',
+      teams: List.generate(_numTeams, (i) => TemplateTeam(
+        name: teams[i].name,
+        players: teams[i].players,
+      )),
+      format: _format,
+      numGroups: _preset!.numGroups,
+      advanceCount: _preset!.advanceCount,
+      groupOf: List<int>.from(_groupOf),
+      createdAt: now,
+      updatedAt: now,
+    ));
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/tournament'),
-        builder: (_) =>
-            TournamentHomeScreen(tournament: BigTournamentHolder(state)),
+        builder: (_) => TournamentHomeScreen(
+          tournament: BigTournamentHolder(state),
+          customTitle: '$tName – Season 1',
+        ),
       ),
     );
   }
@@ -259,7 +293,7 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: sel
-                      ? Colors.amber.shade800.withOpacity(0.25)
+                      ? Colors.amber.shade800.withValues(alpha:0.25)
                       : const Color(0xFF0D2B1E),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
@@ -300,7 +334,7 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: sel ? Colors.amber.shade800.withOpacity(0.35) : const Color(0xFF0D2B1E),
+                  color: sel ? Colors.amber.shade800.withValues(alpha:0.35) : const Color(0xFF0D2B1E),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: sel ? Colors.amber : Colors.white24),
                 ),
@@ -365,13 +399,27 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
     return Column(children: [
       Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        color: Colors.amber.shade800.withOpacity(0.25),
-        child: Text(
-          '${_nameCtrl[teamIdx].text} — Squad Entry  (${teamIdx + 1}/$_numTeams)',
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        color: Colors.amber.shade800.withValues(alpha: 0.25),
+        child: Row(children: [
+          Expanded(
+            child: Text(
+              '${_nameCtrl[teamIdx].text} — Squad Entry  (${teamIdx + 1}/$_numTeams)',
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+          ),
+          TextButton.icon(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white70,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: const Icon(Icons.file_download_outlined, size: 15),
+            label: const Text('Load', style: TextStyle(fontSize: 12)),
+            onPressed: () => _loadTeam(teamIdx),
+          ),
+        ]),
       ),
       Expanded(
         child: SquadEntryWidget(

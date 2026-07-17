@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models.dart';
+import 'squad_entry.dart' show showTeamPickerSheet;
 import 'toss_screen.dart';
 
 // ── per-player mutable setup state ───────────────────────────────────────────
@@ -103,6 +104,30 @@ class _SetupScreenState extends State<SetupScreen>
 
   void _snack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+
+  Future<void> _loadTeamInto(
+      BuildContext ctx, TextEditingController nameCtrl, List<_PlayerSetup> squad) async {
+    final team = await showTeamPickerSheet(ctx);
+    if (team == null || !mounted) return;
+    setState(() {
+      nameCtrl.text = team.name;
+      while (squad.length < team.players.length) {
+        squad.add(_PlayerSetup('Player ${squad.length + 1}'));
+      }
+      while (squad.length > team.players.length) {
+        squad.last.nameCtrl.dispose();
+        squad.removeLast();
+      }
+      for (var i = 0; i < team.players.length; i++) {
+        final p = team.players[i];
+        squad[i].nameCtrl.text = p.name;
+        squad[i].isWicketKeeper = p.isWicketKeeper;
+        squad[i].role = p.isWicketKeeper ? PlayerRole.batter : p.role;
+        squad[i].bowlerType = p.bowlerType;
+        squad[i].isCaptain = p.isCaptain;
+      }
+    });
+  }
 
   // ── player card ───────────────────────────────────────────────────────────
 
@@ -373,7 +398,7 @@ class _SetupScreenState extends State<SetupScreen>
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.85) : Colors.white10,
+          color: active ? color.withValues(alpha:0.85) : Colors.white10,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: active
@@ -509,13 +534,13 @@ class _SetupScreenState extends State<SetupScreen>
             ),
           ),
           Column(children: [
-            _teamHeader(_team1NameCtrl, Colors.green.shade700),
+            _teamHeader(_team1NameCtrl, Colors.green.shade700, _team1),
             Expanded(
                 child:
                     _buildPlayerList(_team1, Colors.green.shade700)),
           ]),
           Column(children: [
-            _teamHeader(_team2NameCtrl, Colors.blue.shade700),
+            _teamHeader(_team2NameCtrl, Colors.blue.shade700, _team2),
             Expanded(
                 child:
                     _buildPlayerList(_team2, Colors.blue.shade700)),
@@ -528,9 +553,9 @@ class _SetupScreenState extends State<SetupScreen>
   Widget _infoCard() => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.green.shade900.withOpacity(0.5),
+          color: Colors.green.shade900.withValues(alpha:0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
+          border: Border.all(color: Colors.greenAccent.withValues(alpha:0.3)),
         ),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,7 +610,7 @@ class _SetupScreenState extends State<SetupScreen>
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: sel
-                    ? Colors.green.shade800.withOpacity(0.35)
+                    ? Colors.green.shade800.withValues(alpha:0.35)
                     : const Color(0xFF0D2B1E),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
@@ -675,21 +700,32 @@ class _SetupScreenState extends State<SetupScreen>
     );
   }
 
-  Widget _teamHeader(TextEditingController ctrl, Color color) =>
+  Widget _teamHeader(TextEditingController ctrl, Color color, List<_PlayerSetup> squad) =>
       ValueListenableBuilder(
         valueListenable: ctrl,
-        builder: (_, val, __) => Container(
+        builder: (ctx, __, ___) => Container(
           width: double.infinity,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          color: color.withOpacity(0.3),
-          child: Text(
-            ctrl.text.isEmpty ? 'Team' : ctrl.text,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16),
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          color: color.withValues(alpha: 0.3),
+          child: Row(children: [
+            Expanded(
+              child: Text(
+                ctrl.text.isEmpty ? 'Team' : ctrl.text,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white70,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.file_download_outlined, size: 15),
+              label: const Text('Load', style: TextStyle(fontSize: 12)),
+              onPressed: () => _loadTeamInto(ctx, ctrl, squad),
+            ),
+          ]),
         ),
       );
 }

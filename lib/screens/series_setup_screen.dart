@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import '../tournament_models.dart';
+import '../database/app_database.dart';
+import '../saved_template.dart';
+import '../services/template_service.dart';
 import 'squad_entry.dart';
 import 'tournament_home_screen.dart';
 
 class SeriesSetupScreen extends StatefulWidget {
-  const SeriesSetupScreen({super.key});
+  final String? templateName;
+  const SeriesSetupScreen({super.key, this.templateName});
   @override
   State<SeriesSetupScreen> createState() => _SeriesSetupScreenState();
 }
@@ -24,7 +28,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 3, vsync: this);
+    _tab = TabController(length: 4, vsync: this);
     _squad1 = List.generate(18, (i) => PlayerSetupData('Player ${i + 1}'));
     _squad2 = List.generate(18, (i) => PlayerSetupData('Player ${i + 1}'));
   }
@@ -53,10 +57,13 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
       MatchFormat.test => _days * 90,
       _ => 20,
     };
+
+    final p1 = _squad1.map((p) => p.toInfo()).toList();
+    final p2 = _squad2.map((p) => p.toInfo()).toList();
     final state = SeriesState(
       teams: [
-        TournamentTeam(name: t1, players: _squad1.map((p) => p.toInfo()).toList()),
-        TournamentTeam(name: t2, players: _squad2.map((p) => p.toInfo()).toList()),
+        TournamentTeam(name: t1, players: p1),
+        TournamentTeam(name: t2, players: p2),
       ],
       overs: overs,
       format: _format,
@@ -64,17 +71,162 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
       totalMatches: _matchCount,
     );
 
+    final tName = widget.templateName ?? '$t1 vs $t2';
+    final now = DateTime.now().millisecondsSinceEpoch;
+    TemplateService.save(SavedTemplate(
+      id: TemplateService.newId(),
+      name: tName,
+      type: 'series',
+      teams: [TemplateTeam(name: t1, players: p1), TemplateTeam(name: t2, players: p2)],
+      format: _format,
+      numMatches: _matchCount,
+      days: _days,
+      createdAt: now,
+      updatedAt: now,
+    ));
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/tournament'),
-        builder: (_) => TournamentHomeScreen(tournament: SeriesHolder(state)),
+        builder: (_) => TournamentHomeScreen(
+          tournament: SeriesHolder(state),
+          customTitle: '$tName – Season 1',
+        ),
       ),
     );
   }
 
   void _snack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+
+  Future<void> _loadTeam(
+      BuildContext ctx, TextEditingController nameCtrl, List<PlayerSetupData> squad) async {
+    final team = await showTeamPickerSheet(ctx);
+    if (team == null) return;
+    applyTeamToSquad(team: team, squad: squad, nameCtrl: nameCtrl, setState: setState);
+  }
+
+  Future<SeriesState?> _loadSavedSeries() async {
+    if (await AppDatabase.savedTournamentType() != 'series') return null;
+    final t = await AppDatabase.loadTournament();
+    return t is SeriesHolder ? t.state : null;
+  }
+
+  Widget _buildContinueTab() => FutureBuilder<SeriesState?>(
+        future: _loadSavedSeries(),
+        builder: (ctx, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Colors.greenAccent));
+          }
+          final state = snap.data;
+          if (state == null) {
+            return _continueEmpty('No saved series found.', 'Start New Series', () => _tab.animateTo(1));
+          }
+          final played = state.matches.where((m) => m.result != null).length;
+          final t1 = state.teams[0].name;
+          final t2 = state.teams[1].name;
+          return _continueSaved(
+            title: '$t1 vs $t2',
+            subtitle: '$played / ${state.totalMatches} matches played · ${state.seriesResult.isEmpty ? "In progress" : state.seriesResult}',
+            format: '${state.totalMatches}-match ${state.format.name.toUpperCase()}',
+            onResume: () => Navigator.pushReplacement(ctx,
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/tournament'),
+                builder: (_) => TournamentHomeScreen(tournament: SeriesHolder(state)),
+              )),
+            onNew: () => _tab.animateTo(1),
+          );
+        },
+      );
+
+  Widget _continueEmpty(String msg, String btnLabel, VoidCallback onTap) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.sports_cricket_outlined, color: Colors.white12, size: 64),
+            const SizedBox(height: 16),
+            Text(msg, style: const TextStyle(color: Colors.white38, fontSize: 16), textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onTap,
+              icon: const Icon(Icons.add),
+              label: Text(btnLabel),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal.shade700,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ]),
+        ),
+      );
+
+  Widget _continueSaved({
+    required String title,
+    required String subtitle,
+    required String format,
+    required VoidCallback onResume,
+    required VoidCallback onNew,
+  }) =>
+      Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(height: 32),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D2B1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.tealAccent.withValues(alpha: 0.4)),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade700.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(format, style: TextStyle(color: Colors.tealAccent.shade100, fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+                const Spacer(),
+                const Icon(Icons.fiber_manual_record, color: Colors.amber, size: 10),
+                const SizedBox(width: 4),
+                const Text('In Progress', style: TextStyle(color: Colors.amber, fontSize: 11)),
+              ]),
+              const SizedBox(height: 12),
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 6),
+              Text(subtitle, style: const TextStyle(color: Colors.white60, fontSize: 13)),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onResume,
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('Resume', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal.shade700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 20),
+          TextButton.icon(
+            onPressed: onNew,
+            icon: const Icon(Icons.add_circle_outline, size: 16),
+            label: const Text('Start a new series instead'),
+            style: TextButton.styleFrom(foregroundColor: Colors.white38),
+          ),
+        ]),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +242,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
           unselectedLabelColor: Colors.white54,
           indicatorColor: Colors.greenAccent,
           tabs: [
+            const Tab(text: 'Continue'),
             const Tab(text: 'Series Info'),
             Tab(text: _t1Ctrl.text.isEmpty ? 'Team 1' : _t1Ctrl.text),
             Tab(text: _t2Ctrl.text.isEmpty ? 'Team 2' : _t2Ctrl.text),
@@ -99,9 +252,10 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
       body: TabBarView(
         controller: _tab,
         children: [
+          _buildContinueTab(),
           _buildInfo(),
           Column(children: [
-            _teamHeader(_t1Ctrl, Colors.green.shade700),
+            _teamHeader(_t1Ctrl, Colors.green.shade700, _squad1),
             Expanded(
                 child: SquadEntryWidget(
                     players: _squad1,
@@ -118,7 +272,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
                         : null)),
           ]),
           Column(children: [
-            _teamHeader(_t2Ctrl, Colors.blue.shade700),
+            _teamHeader(_t2Ctrl, Colors.blue.shade700, _squad2),
             Expanded(
                 child: SquadEntryWidget(
                     players: _squad2,
@@ -221,7 +375,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: sel ? Colors.teal.shade700.withOpacity(0.45) : const Color(0xFF0D2B1E),
+                  color: sel ? Colors.teal.shade700.withValues(alpha:0.45) : const Color(0xFF0D2B1E),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: sel ? Colors.tealAccent : Colors.white24),
                 ),
@@ -292,18 +446,32 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
     );
   }
 
-  Widget _teamHeader(TextEditingController ctrl, Color color) =>
+  Widget _teamHeader(TextEditingController ctrl, Color color, List<PlayerSetupData> squad) =>
       ValueListenableBuilder(
         valueListenable: ctrl,
-        builder: (_, __, ___) => Container(
+        builder: (ctx, __, ___) => Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          color: color.withOpacity(0.3),
-          child: Text(
-            ctrl.text.isEmpty ? 'Team' : ctrl.text,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          color: color.withValues(alpha: 0.3),
+          child: Row(children: [
+            Expanded(
+              child: Text(
+                ctrl.text.isEmpty ? 'Team' : ctrl.text,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white70,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.file_download_outlined, size: 15),
+              label: const Text('Load', style: TextStyle(fontSize: 12)),
+              onPressed: () => _loadTeam(ctx, ctrl, squad),
+            ),
+          ]),
         ),
       );
 }

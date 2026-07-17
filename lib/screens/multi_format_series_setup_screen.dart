@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../tournament_models.dart';
+import '../saved_template.dart';
+import '../services/template_service.dart';
 import 'squad_entry.dart';
 import 'tournament_home_screen.dart';
 
 class MultiFormatSeriesSetupScreen extends StatefulWidget {
-  const MultiFormatSeriesSetupScreen({super.key});
+  final String? templateName;
+  const MultiFormatSeriesSetupScreen({super.key, this.templateName});
   @override
   State<MultiFormatSeriesSetupScreen> createState() =>
       _MultiFormatSeriesSetupScreenState();
@@ -82,37 +85,49 @@ class _MultiFormatSeriesSetupScreenState
     final e2 = validateSquad(_squad2, t2, min: 18, max: 21);
     if (e2 != null) { _snack(e2); return; }
 
+    final p1 = _squad1.map((p) => p.toInfo()).toList();
+    final p2 = _squad2.map((p) => p.toInfo()).toList();
     final state = MultiFormatSeriesState(
-      teams: [
-        TournamentTeam(
-            name: t1, players: _squad1.map((p) => p.toInfo()).toList()),
-        TournamentTeam(
-            name: t2, players: _squad2.map((p) => p.toInfo()).toList()),
-      ],
+      teams: [TournamentTeam(name: t1, players: p1), TournamentTeam(name: t2, players: p2)],
       segments: _segments
-          .map((s) => FormatSegment(
-                format: s.format,
-                matchCount: s.count,
-                days: s.days,
-                team1Name: t1,
-                team2Name: t2,
-              ))
+          .map((s) => FormatSegment(format: s.format, matchCount: s.count, days: s.days, team1Name: t1, team2Name: t2))
           .toList(),
     );
+
+    final tName = widget.templateName ?? '$t1 vs $t2 Tour';
+    final now = DateTime.now().millisecondsSinceEpoch;
+    TemplateService.save(SavedTemplate(
+      id: TemplateService.newId(),
+      name: tName,
+      type: 'multiformat',
+      teams: [TemplateTeam(name: t1, players: p1), TemplateTeam(name: t2, players: p2)],
+      format: _segments.first.format,
+      segments: _segments.map((s) => TemplateSegment(format: s.format, matchCount: s.count, days: s.days)).toList(),
+      createdAt: now,
+      updatedAt: now,
+    ));
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: '/tournament'),
-        builder: (_) =>
-            TournamentHomeScreen(tournament: MultiFormatSeriesHolder(state)),
+        builder: (_) => TournamentHomeScreen(
+          tournament: MultiFormatSeriesHolder(state),
+          customTitle: '$tName – Season 1',
+        ),
       ),
     );
   }
 
   void _snack(String msg) =>
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+
+  Future<void> _loadTeam(
+      BuildContext ctx, TextEditingController nameCtrl, List<PlayerSetupData> squad) async {
+    final team = await showTeamPickerSheet(ctx);
+    if (team == null) return;
+    applyTeamToSquad(team: team, squad: squad, nameCtrl: nameCtrl, setState: setState);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,8 +136,7 @@ class _MultiFormatSeriesSetupScreenState
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2B1E),
         title: const Text('Multi-Format Series',
-            style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tab,
           labelColor: Colors.deepOrangeAccent,
@@ -140,7 +154,7 @@ class _MultiFormatSeriesSetupScreenState
         children: [
           _buildInfo(),
           Column(children: [
-            _teamHeader(_t1Ctrl, Colors.green.shade700),
+            _teamHeader(_t1Ctrl, Colors.green.shade700, _squad1),
             Expanded(
                 child: SquadEntryWidget(
                     players: _squad1,
@@ -157,7 +171,7 @@ class _MultiFormatSeriesSetupScreenState
                         : null)),
           ]),
           Column(children: [
-            _teamHeader(_t2Ctrl, Colors.blue.shade700),
+            _teamHeader(_t2Ctrl, Colors.blue.shade700, _squad2),
             Expanded(
                 child: SquadEntryWidget(
                     players: _squad2,
@@ -275,7 +289,7 @@ class _MultiFormatSeriesSetupScreenState
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: sel
-                  ? Colors.deepOrange.shade700.withOpacity(0.4)
+                  ? Colors.deepOrange.shade700.withValues(alpha:0.4)
                   : const Color(0xFF0D2B1E),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
@@ -384,16 +398,16 @@ class _MultiFormatSeriesSetupScreenState
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.15),
+        color: c.withValues(alpha:0.15),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: c.withOpacity(0.5)),
+        border: Border.all(color: c.withValues(alpha:0.5)),
       ),
       child: Row(children: [
         Container(
           padding:
               const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-              color: c.withOpacity(0.7),
+              color: c.withValues(alpha:0.7),
               borderRadius: BorderRadius.circular(6)),
           child: Text(fmt,
               style: const TextStyle(
@@ -436,21 +450,32 @@ class _MultiFormatSeriesSetupScreenState
     );
   }
 
-  Widget _teamHeader(TextEditingController ctrl, Color color) =>
+  Widget _teamHeader(TextEditingController ctrl, Color color, List<PlayerSetupData> squad) =>
       ValueListenableBuilder(
         valueListenable: ctrl,
-        builder: (_, __, ___) => Container(
+        builder: (ctx, __, ___) => Container(
           width: double.infinity,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          color: color.withOpacity(0.3),
-          child: Text(
-            ctrl.text.isEmpty ? 'Team' : ctrl.text,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16),
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          color: color.withValues(alpha: 0.3),
+          child: Row(children: [
+            Expanded(
+              child: Text(
+                ctrl.text.isEmpty ? 'Team' : ctrl.text,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white70,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.file_download_outlined, size: 15),
+              label: const Text('Load', style: TextStyle(fontSize: 12)),
+              onPressed: () => _loadTeam(ctx, ctrl, squad),
+            ),
+          ]),
         ),
       );
 }

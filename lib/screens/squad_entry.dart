@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models.dart';
+import '../services/firebase_service.dart';
 
 class PlayerSetupData {
   final TextEditingController nameCtrl;
@@ -13,6 +14,23 @@ class PlayerSetupData {
         role = null,
         isCaptain = false,
         isWicketKeeper = false;
+
+  factory PlayerSetupData.fromInfo(PlayerInfo info) {
+    final p = PlayerSetupData(info.name);
+    p.isWicketKeeper = info.isWicketKeeper;
+    p.role = info.isWicketKeeper ? PlayerRole.batter : info.role;
+    p.bowlerType = info.bowlerType;
+    p.isCaptain = info.isCaptain;
+    return p;
+  }
+
+  void loadFrom(PlayerInfo info) {
+    nameCtrl.text = info.name;
+    isWicketKeeper = info.isWicketKeeper;
+    role = info.isWicketKeeper ? PlayerRole.batter : info.role;
+    bowlerType = info.bowlerType;
+    isCaptain = info.isCaptain;
+  }
 
   bool get needsBowlerType =>
       role == PlayerRole.bowler || role == PlayerRole.allRounder;
@@ -154,7 +172,7 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Icon(Icons.remove_circle_outline,
-                          color: Colors.redAccent.withOpacity(0.8), size: 20),
+                          color: Colors.redAccent.withValues(alpha: 0.8), size: 20),
                     ),
                   ),
               ]),
@@ -320,7 +338,7 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.85) : Colors.white10,
+          color: active ? color.withValues(alpha: 0.85) : Colors.white10,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: active
@@ -383,5 +401,170 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
       ));
     }
     return list;
+  }
+}
+
+// ── Shared team-picker utilities ──────────────────────────────────────────────
+
+/// Shows a bottom sheet listing the user's saved teams.
+/// Returns the selected [SavedTeam], or null if dismissed.
+Future<SavedTeam?> showTeamPickerSheet(BuildContext context) =>
+    showModalBottomSheet<SavedTeam>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0D2B1E),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => const _TeamPickerSheet(),
+    );
+
+/// Resizes [squad] to match [team] players, fills each slot from [team],
+/// updates [nameCtrl], then calls [setState].
+void applyTeamToSquad({
+  required SavedTeam team,
+  required List<PlayerSetupData> squad,
+  required TextEditingController nameCtrl,
+  required StateSetter setState,
+}) {
+  setState(() {
+    nameCtrl.text = team.name;
+    // Grow
+    while (squad.length < team.players.length) {
+      squad.add(PlayerSetupData('Player ${squad.length + 1}'));
+    }
+    // Shrink
+    while (squad.length > team.players.length) {
+      squad.last.dispose();
+      squad.removeLast();
+    }
+    // Fill
+    for (int i = 0; i < team.players.length; i++) {
+      squad[i].loadFrom(team.players[i]);
+    }
+  });
+}
+
+class _TeamPickerSheet extends StatefulWidget {
+  const _TeamPickerSheet();
+  @override
+  State<_TeamPickerSheet> createState() => _TeamPickerSheetState();
+}
+
+class _TeamPickerSheetState extends State<_TeamPickerSheet> {
+  List<SavedTeam>? _teams;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    FirebaseService.loadTeams().then((teams) {
+      if (mounted) setState(() { _teams = teams; _loading = false; });
+    }).catchError((_) {
+      if (mounted) setState(() { _teams = []; _loading = false; });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    return SizedBox(
+      height: mq.size.height * 0.6,
+      child: Column(children: [
+        // Handle
+        Container(
+          margin: const EdgeInsets.only(top: 10, bottom: 4),
+          width: 36, height: 4,
+          decoration: BoxDecoration(
+              color: Colors.white24,
+              borderRadius: BorderRadius.circular(2)),
+        ),
+        // Title row
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
+          child: Row(children: [
+            const Expanded(
+              child: Text('Load from My Teams',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold)),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white38),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ]),
+        ),
+        const Divider(height: 1, color: Colors.white10),
+        // Content
+        Expanded(
+          child: _loading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                      color: Colors.greenAccent))
+              : (_teams == null || _teams!.isEmpty)
+                  ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.group_add,
+                              color: Colors.white12, size: 44),
+                          SizedBox(height: 12),
+                          Text('No saved teams yet',
+                              style: TextStyle(color: Colors.white54)),
+                          SizedBox(height: 4),
+                          Text('Go to My Teams to create one',
+                              style: TextStyle(
+                                  color: Colors.white30, fontSize: 12)),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: _teams!.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: 8),
+                      itemBuilder: (ctx, i) {
+                        final t = _teams![i];
+                        return GestureDetector(
+                          onTap: () => Navigator.pop(context, t),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1B3A2D),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white12),
+                            ),
+                            child: Row(children: [
+                              const Icon(Icons.groups,
+                                  color: Colors.greenAccent, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(t.name,
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14)),
+                                      Text('${t.players.length} players',
+                                          style: const TextStyle(
+                                              color: Colors.white38,
+                                              fontSize: 11)),
+                                    ]),
+                              ),
+                              const Icon(Icons.chevron_right,
+                                  color: Colors.white38),
+                            ]),
+                          ),
+                        );
+                      },
+                    ),
+        ),
+      ]),
+    );
   }
 }

@@ -53,6 +53,7 @@ class AppDatabase {
       TriSeriesHolder(:var state) => ('triseries', _triSeriesToJson(state)),
       BigTournamentHolder(:var state) => ('big', _bigToJson(state)),
       MultiFormatSeriesHolder(:var state) => ('multiformat', _mfsToJson(state)),
+      InternationalCupHolder(:var state) => ('intlcup', _cupToJson(state)),
     };
     await p.setString(_kTournType, type);
     await p.setString(_kTourn, jsonEncode(json));
@@ -70,6 +71,7 @@ class AppDatabase {
         'triseries' => TriSeriesHolder(_triSeriesFromJson(m)),
         'big' => BigTournamentHolder(_bigFromJson(m)),
         'multiformat' => MultiFormatSeriesHolder(_mfsFromJson(m)),
+        'intlcup' => InternationalCupHolder(_cupFromJson(m)),
         _ => null,
       };
     } catch (_) {
@@ -123,6 +125,8 @@ class AppDatabase {
         'wb': p.widesBowled,
         'nb': p.noBallsBowled,
         'md': p.maidens,
+        'bap': p.battingPosition,
+        'blp': p.bowlingPosition,
       };
 
   static Player _pFromJson(Map<String, dynamic> m) {
@@ -147,6 +151,8 @@ class AppDatabase {
     p.widesBowled = m['wb'] as int? ?? 0;
     p.noBallsBowled = m['nb'] as int? ?? 0;
     p.maidens = m['md'] as int? ?? 0;
+    p.battingPosition = m['bap'] as int? ?? 0;
+    p.bowlingPosition = m['blp'] as int? ?? 0;
     return p;
   }
 
@@ -469,16 +475,19 @@ class AppDatabase {
       groupAssignments: groupAssignments,
     );
 
-    // Patch phase1 match results
+    // Patch phase1 match results by team names (robust against ordering)
     for (int gi = 0; gi < s.phase1Groups.length && gi < p1gData.length; gi++) {
       final savedMatches =
           (p1gData[gi] as Map<String, dynamic>)['matches'] as List;
-      for (int mi = 0;
-          mi < s.phase1Groups[gi].matches.length && mi < savedMatches.length;
-          mi++) {
-        final sm = savedMatches[mi] as Map<String, dynamic>;
-        if (sm['r'] != null) {
-          s.phase1Groups[gi].matches[mi].result =
+      for (final raw in savedMatches) {
+        final sm = raw as Map<String, dynamic>;
+        if (sm['r'] == null) continue;
+        final t1 = sm['t1'] as String;
+        final t2 = sm['t2'] as String;
+        final idx = s.phase1Groups[gi].matches
+            .indexWhere((m) => m.team1Name == t1 && m.team2Name == t2);
+        if (idx != -1) {
+          s.phase1Groups[gi].matches[idx].result =
               _msFromJson(sm['r'] as Map<String, dynamic>);
         }
       }
@@ -495,13 +504,15 @@ class AppDatabase {
           gi++) {
         final savedMatches =
             (p2gData[gi] as Map<String, dynamic>)['matches'] as List;
-        for (int mi = 0;
-            mi < s.phase2Groups![gi].matches.length &&
-                mi < savedMatches.length;
-            mi++) {
-          final sm = savedMatches[mi] as Map<String, dynamic>;
-          if (sm['r'] != null) {
-            s.phase2Groups![gi].matches[mi].result =
+        for (final raw in savedMatches) {
+          final sm = raw as Map<String, dynamic>;
+          if (sm['r'] == null) continue;
+          final t1 = sm['t1'] as String;
+          final t2 = sm['t2'] as String;
+          final idx = s.phase2Groups![gi].matches
+              .indexWhere((m) => m.team1Name == t1 && m.team2Name == t2);
+          if (idx != -1) {
+            s.phase2Groups![gi].matches[idx].result =
                 _msFromJson(sm['r'] as Map<String, dynamic>);
           }
         }
@@ -541,6 +552,119 @@ class AppDatabase {
     return s;
   }
 
+  // ── InternationalCupState ──────────────────────────────────────────────────
+
+  static Map<String, dynamic> _cupToJson(InternationalCupState s) => {
+        'ct': s.cupType.index,
+        'teams': s.teams.map(_ttToJson).toList(),
+        'p1g': s.phase1Groups
+            .map((g) => {
+                  'teams': g.teamNames,
+                  'matches': g.matches.map(_tmToJson).toList(),
+                })
+            .toList(),
+        'p2g': s.phase2Groups
+            ?.map((g) => {
+                  'name': g.name,
+                  'teams': g.teamNames,
+                  'ac': g.advanceCount,
+                  'matches': g.matches.map(_tmToJson).toList(),
+                })
+            .toList(),
+        'sf1': s.sf1 != null ? _tmToJson(s.sf1!) : null,
+        'sf2': s.sf2 != null ? _tmToJson(s.sf2!) : null,
+        'fin': s.finalMatch != null ? _tmToJson(s.finalMatch!) : null,
+      };
+
+  static InternationalCupState _cupFromJson(Map<String, dynamic> m) {
+    final teams = (m['teams'] as List)
+        .map((t) => _ttFromJson(t as Map<String, dynamic>))
+        .toList();
+    final p1gData = m['p1g'] as List;
+    final groupAssignments = p1gData
+        .map((g) =>
+            List<String>.from((g as Map<String, dynamic>)['teams'] as List))
+        .toList();
+
+    final s = InternationalCupState(
+      cupType: CupType.values[m['ct'] as int],
+      teams: teams,
+      groupAssignments: groupAssignments,
+    );
+
+    // Patch phase1 match results by team names (robust against index/order changes)
+    for (int gi = 0; gi < s.phase1Groups.length && gi < p1gData.length; gi++) {
+      final savedMatches =
+          (p1gData[gi] as Map<String, dynamic>)['matches'] as List;
+      for (final raw in savedMatches) {
+        final sm = raw as Map<String, dynamic>;
+        if (sm['r'] == null) continue;
+        final t1 = sm['t1'] as String;
+        final t2 = sm['t2'] as String;
+        final idx = s.phase1Groups[gi].matches
+            .indexWhere((m) => m.team1Name == t1 && m.team2Name == t2);
+        if (idx != -1) {
+          s.phase1Groups[gi].matches[idx].result =
+              _msFromJson(sm['r'] as Map<String, dynamic>);
+        }
+      }
+    }
+
+    s.tryAdvancePhase1();
+
+    // Patch phase2 match results by team names
+    final p2gData = m['p2g'] as List?;
+    if (p2gData != null && s.phase2Groups != null) {
+      for (int gi = 0;
+          gi < s.phase2Groups!.length && gi < p2gData.length;
+          gi++) {
+        final savedMatches =
+            (p2gData[gi] as Map<String, dynamic>)['matches'] as List;
+        for (final raw in savedMatches) {
+          final sm = raw as Map<String, dynamic>;
+          if (sm['r'] == null) continue;
+          final t1 = sm['t1'] as String;
+          final t2 = sm['t2'] as String;
+          final idx = s.phase2Groups![gi].matches
+              .indexWhere((m) => m.team1Name == t1 && m.team2Name == t2);
+          if (idx != -1) {
+            s.phase2Groups![gi].matches[idx].result =
+                _msFromJson(sm['r'] as Map<String, dynamic>);
+          }
+        }
+      }
+      s.tryAdvancePhase2();
+    }
+
+    // Patch sf1 / sf2
+    void patchSf(TournamentMatch? existing, Map<String, dynamic>? saved,
+        void Function(TournamentMatch) setter) {
+      if (saved == null) return;
+      final target = existing ?? _tmFromJson(saved);
+      if (existing == null) setter(target);
+      if (saved['r'] != null && target.result == null) {
+        target.result = _msFromJson(saved['r'] as Map<String, dynamic>);
+      }
+    }
+
+    patchSf(s.sf1, m['sf1'] as Map<String, dynamic>?, (tm) => s.sf1 = tm);
+    patchSf(s.sf2, m['sf2'] as Map<String, dynamic>?, (tm) => s.sf2 = tm);
+
+    s.trySetupFinal();
+
+    final finData = m['fin'] as Map<String, dynamic>?;
+    if (finData != null) {
+      if (s.finalMatch == null) {
+        s.finalMatch = _tmFromJson(finData);
+      } else if (finData['r'] != null && s.finalMatch!.result == null) {
+        s.finalMatch!.result =
+            _msFromJson(finData['r'] as Map<String, dynamic>);
+      }
+    }
+
+    return s;
+  }
+
   // ── Public serialization wrappers (used by live session) ──────────────────
 
   static Map<String, dynamic> matchStateToJson(MatchState ms) => _msToJson(ms);
@@ -552,6 +676,7 @@ class AppDatabase {
         TriSeriesHolder(:var state) => ('triseries', _triSeriesToJson(state)),
         BigTournamentHolder(:var state) => ('big', _bigToJson(state)),
         MultiFormatSeriesHolder(:var state) => ('multiformat', _mfsToJson(state)),
+        InternationalCupHolder(:var state) => ('intlcup', _cupToJson(state)),
       };
 
   static AnyTournament? tournamentFromJson(String type, Map<String, dynamic> m) =>
@@ -560,6 +685,7 @@ class AppDatabase {
         'triseries' => TriSeriesHolder(_triSeriesFromJson(m)),
         'big' => BigTournamentHolder(_bigFromJson(m)),
         'multiformat' => MultiFormatSeriesHolder(_mfsFromJson(m)),
+        'intlcup' => InternationalCupHolder(_cupFromJson(m)),
         _ => null,
       };
 

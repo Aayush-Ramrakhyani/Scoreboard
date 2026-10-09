@@ -234,8 +234,9 @@ class _InningsCard extends StatelessWidget {
 
   Widget _battingTable() {
     final played = innings.battingTeamPlayers
-        .where((p) => p.hasPlayedInnings || p.isOut)
-        .toList();
+        .where((p) => p.battingPosition > 0)
+        .toList()
+        ..sort((a, b) => a.battingPosition.compareTo(b.battingPosition));
     return _tableContainer(
       header: ['Batter', 'Dismissal', 'R', 'B', '4s', '6s', 'SR'],
       widths: const {
@@ -275,8 +276,9 @@ class _InningsCard extends StatelessWidget {
 
   Widget _bowlingTable() {
     final bowled = innings.bowlingTeamPlayers
-        .where((p) => p.ballsBowled > 0 || p.widesBowled > 0 || p.noBallsBowled > 0)
-        .toList();
+        .where((p) => p.bowlingPosition > 0)
+        .toList()
+        ..sort((a, b) => a.bowlingPosition.compareTo(b.bowlingPosition));
     final ovHeader = _isHundred ? 'Balls' : 'O';
     return _tableContainer(
       header: ['Bowler', ovHeader, 'M', 'R', 'W', 'Eco'],

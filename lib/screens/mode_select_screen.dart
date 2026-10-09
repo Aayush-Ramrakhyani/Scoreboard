@@ -16,6 +16,7 @@ import 'series_setup_screen.dart';
 import 'multi_format_series_setup_screen.dart';
 import 'tri_series_setup_screen.dart';
 import 'big_tournament_setup_screen.dart';
+import 'international_cup_setup_screen.dart';
 
 class ModeSelectScreen extends StatefulWidget {
   const ModeSelectScreen({super.key});
@@ -35,7 +36,9 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
   }
 
   Future<void> _logout() async {
-    await FirebaseService.signOut();
+    try {
+      await FirebaseService.signOut();
+    } catch (_) {}
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -88,6 +91,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
         builder: (_) => TournamentHomeScreen(
           tournament: t!,
           firestoreId: firestoreId,
+          isResume: true,
         ),
       ),
     );
@@ -329,6 +333,19 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
                     subtitle: 'Groups · Super Groups · Semis · Final',
                     color: Colors.amber.shade800,
                     onTap: () => _launch('tournament'),
+                  ),
+                  const SizedBox(height: 14),
+                  _modeCard(
+                    context,
+                    icon: Icons.public,
+                    title: 'International Cup',
+                    subtitle: 'ODI WC · T20 WC · Asia Cup · Champions Trophy',
+                    color: Colors.cyan.shade800,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const InternationalCupSetupScreen()),
+                    ),
                   ),
                   const SizedBox(height: 28),
                   const Divider(color: Colors.white12),

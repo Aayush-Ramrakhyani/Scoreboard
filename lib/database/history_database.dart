@@ -91,6 +91,8 @@ class HistoryDatabase {
         for (final seg in state.segments) {
           out.addAll(seg.matches.where((m) => m.isPlayed));
         }
+      case InternationalCupHolder(:var state):
+        out.addAll(state.allPlayedMatches);
     }
     return out;
   }
@@ -118,6 +120,11 @@ class HistoryDatabase {
         title = '${state.team1Name} vs ${state.team2Name}';
         result = state.isComplete ? state.overallResult : 'Series completed';
         format = 'Multi-Format';
+      case InternationalCupHolder(:var state):
+        type = 'tournament';
+        title = state.title;
+        result = state.isComplete ? '${state.champion} wins!' : 'In progress';
+        format = _fmtLabel(state.format);
     }
     final mott = MotmService.calculateMott(_playedMatches(t));
     await _add(HistoryEntry(

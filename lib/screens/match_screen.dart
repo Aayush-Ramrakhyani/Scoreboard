@@ -7,6 +7,7 @@ import '../services/motm_service.dart';
 import '../services/live_session_service.dart';
 import '../widgets/pulsing_dot.dart';
 import 'scorecard_screen.dart';
+import 'toss_screen.dart';
 
 class MatchScreen extends StatefulWidget {
   final MatchState state;
@@ -368,7 +369,8 @@ class _MatchScreenState extends State<MatchScreen>
 
   bool _isInningsOver() {
     final inn = ms.currentInningsObj;
-    final allOut = inn.wickets >= 10;
+    final maxWickets = ms.setup.isSuperOver ? 2 : 10;
+    final allOut = inn.wickets >= maxWickets;
     final ballsUp = !_isTest && inn.balls >= ms.setup.ballsPerInnings;
     if (allOut || ballsUp) {
       // Ball-limit: current partnership is still ongoing, save it
@@ -387,7 +389,8 @@ class _MatchScreenState extends State<MatchScreen>
       if (inn.totalRuns >= ms.target) {
         inn.saveCurrentPartnership();
         inn.isComplete = true;
-        final wl = 10 - inn.wickets;
+        final maxWickets = ms.setup.isSuperOver ? 2 : 10;
+        final wl = maxWickets - inn.wickets;
         ms.matchResult = '${ms.battingTeamName} won by $wl wicket${wl != 1 ? "s" : ""}';
         ms.winnerName = ms.battingTeamName;
         ms.matchOver = true;
@@ -430,15 +433,34 @@ class _MatchScreenState extends State<MatchScreen>
     } else {
       if (!ms.matchOver) {
         final inn2 = ms.innings2;
-        if (inn2.totalRuns < ms.target) {
-          ms.matchResult =
-              '${ms.bowlingTeamName} won by ${ms.target - 1 - inn2.totalRuns} run${ms.target - 1 - inn2.totalRuns != 1 ? "s" : ""}';
+        final deficit = ms.target - 1 - inn2.totalRuns;
+        if (deficit > 0) {
+          ms.matchResult = '${ms.bowlingTeamName} won by $deficit run${deficit != 1 ? "s" : ""}';
           ms.winnerName = ms.bowlingTeamName;
+          ms.matchOver = true;
         } else {
-          ms.matchResult = 'Match Tied';
-          ms.winnerName = '';
+          // Tie (deficit == 0)
+          if (ms.setup.isSuperOver) {
+            // This super over itself tied — signal caller silently and pop
+            ms.matchResult = 'Tied';
+            ms.winnerName = '';
+            ms.matchOver = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _clearSave();
+              widget.onMatchComplete?.call(ms);
+              if (mounted) Navigator.pop(context);
+            });
+            return;
+          } else if (!ms.setup.isTest) {
+            // Regular limited-overs tie — start super over chain
+            WidgetsBinding.instance.addPostFrameCallback((_) => _startSuperOver(1));
+            return;
+          } else {
+            ms.matchResult = 'Match Tied';
+            ms.winnerName = '';
+            ms.matchOver = true;
+          }
         }
-        ms.matchOver = true;
       }
       WidgetsBinding.instance.addPostFrameCallback((_) => _showMatchOver());
     }
@@ -658,6 +680,10 @@ class _MatchScreenState extends State<MatchScreen>
                         setState(() {
                           inn.currentBowlerIndex = selected!;
                           inn.currentBowler.startNewOver();
+                          if (inn.currentBowler.bowlingPosition == 0) {
+                            inn.currentBowler.bowlingPosition =
+                                inn.bowlingTeamPlayers.where((p) => p.bowlingPosition > 0).length + 1;
+                          }
                         });
                         Navigator.pop(ctx);
                       },
@@ -833,6 +859,7 @@ class _MatchScreenState extends State<MatchScreen>
                   if (inn.wickets < 10 && nextBatsman != null) {
                     inn.strikerIndex = nextBatsman!;
                     inn.battingTeamPlayers[nextBatsman!].hasPlayedInnings = true;
+                    inn.battingTeamPlayers[nextBatsman!].battingPosition = inn.wickets + 2;
                     inn.startPartnership();
                   }
                   if (!_checkWinCondition() && !_isInningsOver() &&
@@ -1047,9 +1074,12 @@ class _MatchScreenState extends State<MatchScreen>
                     inn.nonStrikerIndex = nonStrikerIdx!;
                     inn.nextBatsmanIndex = 2;
                     inn.battingTeamPlayers[strikerIdx!].hasPlayedInnings = true;
+                    inn.battingTeamPlayers[strikerIdx!].battingPosition = 1;
                     inn.battingTeamPlayers[nonStrikerIdx!].hasPlayedInnings = true;
+                    inn.battingTeamPlayers[nonStrikerIdx!].battingPosition = 2;
                     inn.currentBowlerIndex = bowlerIdx!;
                     inn.currentBowler.startNewOver();
+                    inn.currentBowler.bowlingPosition = 1;
                     inn.startPartnership();
                   });
                   Navigator.pop(ctx);
@@ -1064,8 +1094,85 @@ class _MatchScreenState extends State<MatchScreen>
     );
   }
 
+  void _startSuperOver(int round) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF0D2B1E),
+        title: Text(
+          round == 1 ? 'Super Over!' : 'Super Over #$round!',
+          style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 22),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          round == 1
+              ? 'Match tied!\nEach team faces 1 over to decide the winner.'
+              : 'Super over tied again!\nAnother super over will decide the winner.',
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          Center(
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _launchSuperOver(round);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber.shade700,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text(round == 1 ? 'Start Super Over' : 'Start Super Over #$round'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _launchSuperOver(int round) {
+    final superSetup = MatchSetup(
+      team1Name: ms.setup.team1Name,
+      team2Name: ms.setup.team2Name,
+      team1Players: ms.setup.team1Players,
+      team2Players: ms.setup.team2Players,
+      format: ms.setup.format,
+      isSuperOver: true,
+      customOvers: 1,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/superover'),
+        builder: (_) => TossScreen(
+          setup: superSetup,
+          onMatchComplete: (superMs) {
+            if (superMs.winnerName.isEmpty) {
+              // Another tie — show next super over dialog on this screen
+              if (mounted) _startSuperOver(round + 1);
+            } else {
+              // Winner found — patch original result and show match over
+              ms.matchResult = '${superMs.winnerName} won (Super Over)';
+              ms.winnerName = superMs.winnerName;
+              ms.matchOver = true;
+              if (mounted) _showMatchOver();
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   void _showMatchOver() {
     _clearSave();
+    // Super over: no dialog — silently call onMatchComplete and pop back
+    if (ms.setup.isSuperOver) {
+      widget.onMatchComplete?.call(ms);
+      if (mounted) Navigator.pop(context);
+      return;
+    }
     if (widget.onMatchComplete == null) HistoryDatabase.addMatch(ms);
     widget.onMatchComplete?.call(ms);
     final mom = MotmService.calculateMotm(ms);
@@ -1705,6 +1812,7 @@ class _MatchScreenState extends State<MatchScreen>
       if (inn.wickets < 10 && nextBatsman != null) {
         inn.strikerIndex = nextBatsman;
         inn.battingTeamPlayers[nextBatsman].hasPlayedInnings = true;
+        inn.battingTeamPlayers[nextBatsman].battingPosition = inn.wickets + 2;
         inn.startPartnership();
       }
 

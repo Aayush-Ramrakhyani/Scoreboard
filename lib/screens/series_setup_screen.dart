@@ -133,7 +133,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
             onResume: () => Navigator.pushReplacement(ctx,
               MaterialPageRoute(
                 settings: const RouteSettings(name: '/tournament'),
-                builder: (_) => TournamentHomeScreen(tournament: SeriesHolder(state)),
+                builder: (_) => TournamentHomeScreen(tournament: SeriesHolder(state), isResume: true),
               )),
             onNew: () => _tab.animateTo(1),
           );

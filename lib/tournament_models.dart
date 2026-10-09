@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'models.dart';
 export 'models.dart' show MatchFormat;
 
@@ -129,20 +130,47 @@ class TournamentGroup {
       computedStandings(ballsPerInnings).take(advanceCount).map((s) => s.teamName).toList();
 }
 
-// Shuffle matches so no team plays two matches in a row.
-// Strategy: pre-shuffle for randomness, then greedily pick the first
-// candidate that doesn't share a team with the previous match.
-// If no valid candidate exists (unavoidable conflict), fall back to any.
-List<TournamentMatch> _scheduleNoConsecutive(List<TournamentMatch> matches) {
-  final pool = matches.toList()..shuffle();
+// Stable hash from team names — deterministic per tournament, unique per group composition.
+int _teamSeed(List<String> names) {
+  var h = 5381;
+  for (final s in names) {
+    for (final c in s.codeUnits) {
+      h = ((h << 5) + h + c) & 0x7FFFFFFF;
+    }
+  }
+  return h;
+}
+
+// Builds a schedule that round-robins through groups:
+//   match 1 from group A, match 1 from group B, match 1 from group C, match 1 from group D,
+//   match 2 from group A, match 2 from group B, ...
+// Within each group slot, picks randomly among candidates whose teams haven't
+// just played (seeded so the order is identical on every save/resume cycle).
+List<TournamentMatch> _buildSchedule(List<TournamentGroup> groups, int seed) {
+  final rng = Random(seed);
+  // Separate pool per group
+  final pools = groups.map((g) => g.matches.toList()).toList();
   final result = <TournamentMatch>[];
-  while (pool.isNotEmpty) {
-    final lastTeams = result.isEmpty
-        ? <String>{}
-        : {result.last.team1Name, result.last.team2Name};
-    final idx = pool.indexWhere(
-        (m) => !lastTeams.contains(m.team1Name) && !lastTeams.contains(m.team2Name));
-    result.add(pool.removeAt(idx == -1 ? 0 : idx));
+
+  while (pools.any((p) => p.isNotEmpty)) {
+    for (int gi = 0; gi < pools.length; gi++) {
+      if (pools[gi].isEmpty) continue;
+
+      final lastTeams = result.isEmpty
+          ? <String>{}
+          : {result.last.team1Name, result.last.team2Name};
+
+      // Prefer a match whose teams haven't just played; fall back to any.
+      final valid = pools[gi]
+          .where((m) =>
+              !lastTeams.contains(m.team1Name) &&
+              !lastTeams.contains(m.team2Name))
+          .toList();
+      final pick =
+          valid.isNotEmpty ? valid[rng.nextInt(valid.length)] : pools[gi].first;
+      pools[gi].remove(pick);
+      result.add(pick);
+    }
   }
   return result;
 }
@@ -295,8 +323,8 @@ class BigTournamentState {
       )..generateMatches();
       phase1Groups.add(g);
     }
-    // Flat shuffled schedule across all groups
-    phase1Schedule = _scheduleNoConsecutive(phase1Groups.expand((g) => g.matches).toList());
+    final p1Names = phase1Groups.expand((g) => g.teamNames).toList();
+    phase1Schedule = _buildSchedule(phase1Groups, _teamSeed(p1Names));
   }
 
   int get phase1QualifierCount => numPhase1Groups * phase1AdvanceCount;
@@ -327,7 +355,8 @@ class BigTournamentState {
       TournamentGroup(name: 'Super Group 2', teamNames: sg2Names, advanceCount: 2)
         ..generateMatches(),
     ];
-    phase2Schedule = _scheduleNoConsecutive(phase2Groups!.expand((g) => g.matches).toList());
+    final p2Names = phase2Groups!.expand((g) => g.teamNames).toList();
+    phase2Schedule = _buildSchedule(phase2Groups!, _teamSeed(p2Names));
   }
 
   bool get phase2Complete => phase2Groups?.every((g) => g.isComplete) ?? false;
@@ -503,6 +532,171 @@ class MultiFormatSeriesState {
   }
 }
 
+// ── International Cup ─────────────────────────────────────────────────────────
+
+enum CupType { odiWorldCup, t20WorldCup, asiaCup, championsTrophy }
+
+class InternationalCupState {
+  final CupType cupType;
+  final List<TournamentTeam> teams;
+
+  List<TournamentGroup> phase1Groups = [];
+  List<TournamentMatch> phase1Schedule = [];
+  List<TournamentGroup>? phase2Groups;
+  List<TournamentMatch> phase2Schedule = [];
+  TournamentMatch? sf1, sf2, finalMatch;
+
+  InternationalCupState({
+    required this.cupType,
+    required this.teams,
+    required List<List<String>> groupAssignments,
+  }) {
+    _buildPhase1(groupAssignments);
+  }
+
+  InternationalCupState.restore({
+    required this.cupType,
+    required this.teams,
+  });
+
+  String get title => switch (cupType) {
+        CupType.odiWorldCup => 'ICC ODI World Cup',
+        CupType.t20WorldCup => 'ICC T20 World Cup',
+        CupType.asiaCup => 'Asia Cup',
+        CupType.championsTrophy => 'ICC Champions Trophy',
+      };
+
+  MatchFormat get format => switch (cupType) {
+        CupType.t20WorldCup || CupType.asiaCup => MatchFormat.t20,
+        _ => MatchFormat.odi,
+      };
+
+  int get overs => format == MatchFormat.t20 ? 20 : 50;
+  int get ballsPerInnings => overs * 6;
+  int get phase1AdvanceCount => cupType == CupType.odiWorldCup ? 4 : 2;
+
+  bool get hasPhase2 =>
+      cupType == CupType.t20WorldCup || cupType == CupType.asiaCup;
+  bool get hasSemiFinals => cupType != CupType.asiaCup;
+
+  bool get phase1Complete => phase1Groups.every((g) => g.isComplete);
+  bool get phase2Complete => phase2Groups?.every((g) => g.isComplete) ?? false;
+  bool get semisComplete => sf1?.isPlayed == true && sf2?.isPlayed == true;
+  bool get isComplete => finalMatch?.isPlayed == true;
+  String get champion => finalMatch?.winnerName ?? '';
+
+  TournamentTeam teamByName(String name) =>
+      teams.firstWhere((t) => t.name == name);
+
+  void _buildPhase1(List<List<String>> assignments) {
+    const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    for (int i = 0; i < assignments.length; i++) {
+      final g = TournamentGroup(
+        name: assignments.length == 1 ? 'Group Stage' : 'Group ${labels[i]}',
+        teamNames: List.from(assignments[i]),
+        advanceCount: phase1AdvanceCount,
+      )..generateMatches();
+      phase1Groups.add(g);
+    }
+    final p1Names = phase1Groups.expand((g) => g.teamNames).toList();
+    phase1Schedule = _buildSchedule(phase1Groups, _teamSeed(p1Names));
+  }
+
+  void tryAdvancePhase1() {
+    if (!phase1Complete) return;
+    if (phase2Groups != null || sf1 != null || finalMatch != null) return;
+    if (hasPhase2) {
+      _buildPhase2();
+    } else {
+      _buildSemis(phase1Groups);
+    }
+  }
+
+  void _buildPhase2() {
+    final isAsiaCup = cupType == CupType.asiaCup;
+    if (isAsiaCup) {
+      final all = phase1Groups
+          .expand((g) => g.qualifiers(ballsPerInnings))
+          .toList();
+      phase2Groups = [
+        TournamentGroup(name: 'Super 4', teamNames: all, advanceCount: 2)
+          ..generateMatches(),
+      ];
+    } else {
+      // T20 WC: cross-group Super 8
+      final half = phase1Groups.length ~/ 2;
+      final sg1 = phase1Groups
+          .take(half)
+          .expand((g) => g.qualifiers(ballsPerInnings))
+          .toList();
+      final sg2 = phase1Groups
+          .skip(half)
+          .expand((g) => g.qualifiers(ballsPerInnings))
+          .toList();
+      phase2Groups = [
+        TournamentGroup(name: 'Super 8 Group 1', teamNames: sg1, advanceCount: 2)
+          ..generateMatches(),
+        TournamentGroup(name: 'Super 8 Group 2', teamNames: sg2, advanceCount: 2)
+          ..generateMatches(),
+      ];
+    }
+    final p2Names = phase2Groups!.expand((g) => g.teamNames).toList();
+    phase2Schedule = _buildSchedule(phase2Groups!, _teamSeed(p2Names));
+  }
+
+  void tryAdvancePhase2() {
+    if (phase2Groups == null || !phase2Complete) return;
+    if (sf1 != null || finalMatch != null) return;
+    if (hasSemiFinals) {
+      _buildSemis(phase2Groups!);
+    } else {
+      // Asia Cup: top 2 of Super 4 → direct final
+      final st = phase2Groups![0].computedStandings(ballsPerInnings);
+      finalMatch = TournamentMatch(
+          team1Name: st[0].teamName, team2Name: st[1].teamName, phase: 'Final');
+    }
+  }
+
+  void _buildSemis(List<TournamentGroup> groups) {
+    if (groups.length == 1) {
+      final st = groups[0].computedStandings(ballsPerInnings);
+      sf1 = TournamentMatch(
+          team1Name: st[0].teamName, team2Name: st[3].teamName, phase: 'Semi-Final 1');
+      sf2 = TournamentMatch(
+          team1Name: st[1].teamName, team2Name: st[2].teamName, phase: 'Semi-Final 2');
+    } else {
+      final g1 = groups[0].computedStandings(ballsPerInnings);
+      final g2 = groups[1].computedStandings(ballsPerInnings);
+      sf1 = TournamentMatch(
+          team1Name: g1[0].teamName, team2Name: g2[1].teamName, phase: 'Semi-Final 1');
+      sf2 = TournamentMatch(
+          team1Name: g2[0].teamName, team2Name: g1[1].teamName, phase: 'Semi-Final 2');
+    }
+  }
+
+  void trySetupFinal() {
+    if (sf1?.isPlayed != true || sf2?.isPlayed != true || finalMatch != null) return;
+    finalMatch = TournamentMatch(
+        team1Name: sf1!.winnerName, team2Name: sf2!.winnerName, phase: 'Final');
+  }
+
+  List<TournamentMatch> get allPlayedMatches {
+    final out = <TournamentMatch>[];
+    for (final g in phase1Groups) {
+      out.addAll(g.matches.where((m) => m.isPlayed));
+    }
+    if (phase2Groups != null) {
+      for (final g in phase2Groups!) {
+        out.addAll(g.matches.where((m) => m.isPlayed));
+      }
+    }
+    if (sf1?.isPlayed == true) out.add(sf1!);
+    if (sf2?.isPlayed == true) out.add(sf2!);
+    if (finalMatch?.isPlayed == true) out.add(finalMatch!);
+    return out;
+  }
+}
+
 // ── Discriminated union passed to TournamentHomeScreen ────────────────────────
 
 sealed class AnyTournament {
@@ -527,4 +721,9 @@ class BigTournamentHolder extends AnyTournament {
 class MultiFormatSeriesHolder extends AnyTournament {
   final MultiFormatSeriesState state;
   const MultiFormatSeriesHolder(this.state);
+}
+
+class InternationalCupHolder extends AnyTournament {
+  final InternationalCupState state;
+  const InternationalCupHolder(this.state);
 }

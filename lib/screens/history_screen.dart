@@ -134,6 +134,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         builder: (_) => TournamentHomeScreen(
           tournament: tournament,
           firestoreId: fid,
+          isResume: true,
         ),
       ),
     );

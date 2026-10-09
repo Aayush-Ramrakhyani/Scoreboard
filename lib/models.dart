@@ -79,6 +79,10 @@ class Player {
   int maidens = 0;
   int _lastOverStartRuns = 0;
 
+  // arrival order (0 = not yet come in)
+  int battingPosition = 0;
+  int bowlingPosition = 0;
+
   Player(
     this.name, {
     this.role = PlayerRole.batter,
@@ -245,6 +249,8 @@ class MatchSetup {
   List<PlayerInfo> team2Players;
   MatchFormat format;
   int days; // Test only: 3, 4, or 5
+  bool isSuperOver;
+  int? customOvers; // override overs count (1 for super over)
 
   MatchSetup({
     required this.team1Name,
@@ -253,6 +259,8 @@ class MatchSetup {
     required this.team2Players,
     required this.format,
     this.days = 5,
+    this.isSuperOver = false,
+    this.customOvers,
   });
 
   bool get isHundred => format == MatchFormat.hundred;
@@ -275,7 +283,8 @@ class MatchSetup {
   // Total balls per innings (0 = unlimited for Test)
   int get ballsPerInnings {
     if (isTest) return 0;
-    return overs * setSize; // T10=60, T20=120, ODI=300, Hundred=100
+    final ov = customOvers ?? overs;
+    return ov * setSize; // T10=60, T20=120, ODI=300, Hundred=100, SuperOver=6
   }
 
   String get formatLabel {
@@ -325,6 +334,8 @@ class MatchState {
       p.isOut = false;
       p.hasPlayedInnings = false;
       p.dismissalInfo = '';
+      p.battingPosition = 0;
+      p.bowlingPosition = 0;
     }
   }
 

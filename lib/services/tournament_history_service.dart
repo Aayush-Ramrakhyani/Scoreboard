@@ -108,6 +108,7 @@ class TournamentHistoryService {
       BigTournamentHolder h => 'Tournament · ${h.state.teams.length} teams',
       MultiFormatSeriesHolder h =>
         '${h.state.team1Name} vs ${h.state.team2Name}',
+      InternationalCupHolder h => h.state.title,
     };
   }
 
@@ -121,6 +122,8 @@ class TournamentHistoryService {
           h.state.isComplete ? '${h.state.champion} wins!' : 'In progress',
         MultiFormatSeriesHolder h =>
           h.state.isComplete ? h.state.overallResult : 'In progress',
+        InternationalCupHolder h =>
+          h.state.isComplete ? '${h.state.champion} wins!' : 'In progress',
       };
 
   static String _buildFormat(AnyTournament t) => switch (t) {
@@ -129,6 +132,7 @@ class TournamentHistoryService {
         TriSeriesHolder h => _fmtLabel(h.state.format),
         BigTournamentHolder h => _fmtLabel(h.state.format),
         MultiFormatSeriesHolder _ => 'Multi-Format',
+        InternationalCupHolder h => _fmtLabel(h.state.format),
       };
 
   static String _fmtLabel(MatchFormat f) => switch (f) {

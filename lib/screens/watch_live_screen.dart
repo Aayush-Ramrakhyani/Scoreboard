@@ -307,6 +307,7 @@ class _TournamentLiveScaffold extends StatelessWidget {
       BigTournamentHolder _ => 'Tournament',
       MultiFormatSeriesHolder h =>
         '${h.state.team1Name} vs ${h.state.team2Name}',
+      InternationalCupHolder h => h.state.title,
     };
   }
 
@@ -315,6 +316,7 @@ class _TournamentLiveScaffold extends StatelessWidget {
         TriSeriesHolder h => h.state.teams,
         BigTournamentHolder h => h.state.teams,
         MultiFormatSeriesHolder h => h.state.teams,
+        InternationalCupHolder h => h.state.teams,
       };
 
   @override
@@ -324,6 +326,7 @@ class _TournamentLiveScaffold extends StatelessWidget {
       TriSeriesHolder h => h.state.isComplete,
       BigTournamentHolder h => h.state.isComplete,
       MultiFormatSeriesHolder h => h.state.isComplete,
+      InternationalCupHolder h => h.state.isComplete,
     };
 
     return DefaultTabController(
@@ -807,8 +810,14 @@ class _InningsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final batted = inn.battingTeamPlayers.where((p) => p.hasPlayedInnings || p.isOut).toList();
-    final bowled = inn.bowlingTeamPlayers.where((p) => p.ballsBowled > 0).toList();
+    final batted = inn.battingTeamPlayers
+        .where((p) => p.battingPosition > 0)
+        .toList()
+        ..sort((a, b) => a.battingPosition.compareTo(b.battingPosition));
+    final bowled = inn.bowlingTeamPlayers
+        .where((p) => p.bowlingPosition > 0)
+        .toList()
+        ..sort((a, b) => a.bowlingPosition.compareTo(b.bowlingPosition));
 
     return Container(
       decoration: BoxDecoration(
@@ -944,6 +953,7 @@ class _PointsTableTab extends StatelessWidget {
         TriSeriesHolder h => _triSeriesTable(h.state),
         BigTournamentHolder h => _bigTable(h.state),
         MultiFormatSeriesHolder h => _mfsTable(h.state),
+        InternationalCupHolder h => _cupTable(h.state),
       },
     );
   }
@@ -984,6 +994,22 @@ class _PointsTableTab extends StatelessWidget {
               nrr: st.nrr.toStringAsFixed(3))),
       ]));
       if (gi < groups.length - 1) cols.add(const SizedBox(height: 14));
+    }
+    return Column(children: cols);
+  }
+
+  Widget _cupTable(InternationalCupState s) {
+    final groups = [...s.phase1Groups, ...?s.phase2Groups];
+    final cols = <Widget>[];
+    for (final g in groups) {
+      final standings = g.computedStandings(s.ballsPerInnings);
+      cols.add(_tableCard(g.name, [
+        _standingHeader(),
+        ...standings.map((st) => _standingRow(
+              st.teamName, st.won, st.lost, st.tied, st.points,
+              nrr: st.nrr.toStringAsFixed(3))),
+      ]));
+      cols.add(const SizedBox(height: 14));
     }
     return Column(children: cols);
   }
@@ -1097,6 +1123,7 @@ class _MatchesTab extends StatelessWidget {
         MultiFormatSeriesHolder h => [
             for (final seg in h.state.segments) ...seg.matches,
           ],
+        InternationalCupHolder h => h.state.allPlayedMatches,
       };
 
   @override
@@ -1411,6 +1438,8 @@ class _StatsTab extends StatefulWidget {
         for (final seg in h.state.segments) {
           out.addAll(seg.matches.where((m) => m.result != null));
         }
+      case InternationalCupHolder h:
+        out.addAll(h.state.allPlayedMatches);
     }
     return out;
   }

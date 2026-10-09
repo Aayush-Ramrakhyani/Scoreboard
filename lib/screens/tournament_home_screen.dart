@@ -10,17 +10,20 @@ import '../services/template_service.dart';
 import '../services/tournament_history_service.dart';
 import '../widgets/pulsing_dot.dart';
 import 'playing_xi_screen.dart';
+import 'scorecard_screen.dart';
 import 'toss_screen.dart';
 
 class TournamentHomeScreen extends StatefulWidget {
   final AnyTournament tournament;
   final String? customTitle;
   final String? firestoreId; // pass when resuming so history entry is reused
+  final bool isResume; // true when loading saved data; false when starting fresh
   const TournamentHomeScreen({
     super.key,
     required this.tournament,
     this.customTitle,
     this.firestoreId,
+    this.isResume = false,
   });
   @override
   State<TournamentHomeScreen> createState() => _TournamentHomeScreenState();
@@ -39,6 +42,14 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     super.initState();
     _tab = TabController(length: 4, vsync: this);
     _firestoreId = widget.firestoreId ?? TournamentHistoryService.newId();
+    if (!widget.isResume) {
+      // Immediately overwrite the active-tournament slot with this fresh state.
+      // Without this, going back before playing a match leaves stale old data
+      // in storage, causing phantom results on the next Resume.
+      AppDatabase.saveTournament(widget.tournament);
+      TemplateService.saveTournamentProgress(widget.tournament,
+          title: widget.customTitle, firestoreId: _firestoreId);
+    }
   }
 
   @override
@@ -127,6 +138,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         TriSeriesHolder h => h.state.teams,
         BigTournamentHolder h => h.state.teams,
         MultiFormatSeriesHolder h => h.state.teams,
+        InternationalCupHolder h => h.state.teams,
       };
 
   MatchFormat get _format => switch (widget.tournament) {
@@ -134,6 +146,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         TriSeriesHolder h => h.state.format,
         BigTournamentHolder h => h.state.format,
         MultiFormatSeriesHolder _ => MatchFormat.t20, // overridden per match
+        InternationalCupHolder h => h.state.format,
       };
 
   int get _days => switch (widget.tournament) {
@@ -153,6 +166,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
       BigTournamentHolder _ => 'Tournament',
       MultiFormatSeriesHolder h =>
         '${h.state.team1Name} vs ${h.state.team2Name}',
+      InternationalCupHolder h => h.state.title,
     };
   }
 
@@ -161,6 +175,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         TriSeriesHolder h => h.state.isComplete,
         BigTournamentHolder h => h.state.isComplete,
         MultiFormatSeriesHolder h => h.state.isComplete,
+        InternationalCupHolder h => h.state.isComplete,
       };
 
   String get _resultBanner => switch (widget.tournament) {
@@ -171,6 +186,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
           h.state.isComplete ? '${h.state.champion} wins the Tournament!' : '',
         MultiFormatSeriesHolder h =>
           h.state.isComplete ? h.state.overallResult : '',
+        InternationalCupHolder h =>
+          h.state.isComplete ? '${h.state.champion} wins the ${h.state.title}!' : '',
       };
 
   // ── match play ────────────────────────────────────────────────────────────
@@ -278,6 +295,11 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         break;
       case MultiFormatSeriesHolder _:
         break; // sequential play handled by isMatchPlayable; no phase advancement needed
+      case InternationalCupHolder h:
+        final s = h.state;
+        s.tryAdvancePhase1();
+        if (s.phase2Groups != null) s.tryAdvancePhase2();
+        s.trySetupFinal();
     }
   }
 
@@ -441,6 +463,15 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
           if (!seg.isComplete) return seg.matches;
         }
         return [];
+      case InternationalCupHolder h:
+        final s = h.state;
+        if (!s.phase1Complete) return s.phase1Schedule;
+        if (s.phase2Groups != null && !s.phase2Complete) return s.phase2Schedule;
+        final knockouts = <TournamentMatch>[];
+        if (s.sf1 != null) knockouts.add(s.sf1!);
+        if (s.sf2 != null) knockouts.add(s.sf2!);
+        if (s.finalMatch != null) knockouts.add(s.finalMatch!);
+        return knockouts;
     }
   }
 
@@ -485,6 +516,20 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
 
       case MultiFormatSeriesHolder _:
         return []; // multi-format schedule built directly in _buildSchedule
+
+      case InternationalCupHolder h:
+        final s = h.state;
+        final sections = <(String, List<TournamentMatch>)>[];
+        sections.add(('GROUP STAGE', s.phase1Schedule));
+        if (s.phase2Groups != null) {
+          sections.add(('SUPER STAGE', s.phase2Schedule));
+        }
+        final sfMatches = <TournamentMatch>[];
+        if (s.sf1 != null) sfMatches.add(s.sf1!);
+        if (s.sf2 != null) sfMatches.add(s.sf2!);
+        if (sfMatches.isNotEmpty) sections.add(('SEMI-FINALS', sfMatches));
+        if (s.finalMatch != null) sections.add(('FINAL', [s.finalMatch!]));
+        return sections;
     }
   }
 
@@ -585,8 +630,26 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         else if (locked)
           const Icon(Icons.lock_outline, color: Colors.white24, size: 20)
         else
-          const Icon(Icons.check_circle_outline,
-              color: Colors.greenAccent, size: 22),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ScorecardScreen(state: match.result!),
+              ),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.analytics_outlined, color: Colors.greenAccent, size: 14),
+                SizedBox(width: 4),
+                Text('Score', style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+              ]),
+            ),
+          ),
       ]),
     );
   }
@@ -605,6 +668,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         return _buildBigTournamentStandings(h.state);
       case MultiFormatSeriesHolder h:
         return _buildMultiFormatStandings(h.state);
+      case InternationalCupHolder h:
+        return _buildCupStandings(h.state);
     }
   }
 
@@ -829,6 +894,49 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     (8, 'Best Bowling',  false),
   ];
 
+  // ── International Cup standings ───────────────────────────────────────────
+
+  Widget _buildCupStandings(InternationalCupState s) {
+    final groups = [
+      ...s.phase1Groups,
+      ...?s.phase2Groups,
+    ];
+    final knockouts = [s.sf1, s.sf2, s.finalMatch].whereType<TournamentMatch>().where((m) => m.isPlayed).toList();
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        for (final group in groups) ...[
+          _sectionHeader(group.name),
+          const SizedBox(height: 6),
+          _pointsTable(group.computedStandings(s.ballsPerInnings)),
+          const SizedBox(height: 14),
+        ],
+        if (knockouts.isNotEmpty) ...[
+          _sectionHeader('KNOCKOUTS'),
+          const SizedBox(height: 6),
+          for (final m in knockouts)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D2B1E),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(m.phase, style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('${m.winnerName} won', style: const TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text(m.result!.matchResult, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                ]),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
   List<TournamentMatch> get _allPlayedMatches {
     final out = <TournamentMatch>[];
     switch (widget.tournament) {
@@ -847,6 +955,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         for (final seg in h.state.segments) {
           out.addAll(seg.matches.where((m) => m.isPlayed));
         }
+      case InternationalCupHolder h:
+        out.addAll(h.state.allPlayedMatches);
     }
     return out;
   }
@@ -1146,6 +1256,9 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         ),
       );
     }
+
+    // Cap at top 10
+    if (sorted.length > 10) sorted.length = 10;
 
     Widget hCell(String t, double w, bool prime) => SizedBox(
           width: w,

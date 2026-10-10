@@ -78,6 +78,23 @@ Bounce-in with `easeOutBack` → hold → fade/scale-out · total 1.1 s · non-b
 
 ---
 
+## 📸 Screenshots
+
+<p float="left">
+  <img src="Screenshots/Splash%20Screen.png" width="22%" />
+  <img src="Screenshots/Home.png" width="22%" />
+  <img src="Screenshots/Home2.png" width="22%" />
+  <img src="Screenshots/Series.png" width="22%" />
+</p>
+<p float="left">
+  <img src="Screenshots/Multi_Format.png" width="22%" />
+  <img src="Screenshots/TeamName.png" width="22%" />
+  <img src="Screenshots/BigTournament.png" width="22%" />
+  <img src="Screenshots/BigTournament2.png" width="22%" />
+</p>
+
+---
+
 ## 📁 Project Structure
 
 ```

@@ -46,12 +46,10 @@ class _WatchLiveScreenState extends State<WatchLiveScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Watch Live',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text('Watch Live',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -61,16 +59,16 @@ class _WatchLiveScreenState extends State<WatchLiveScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.wifi_tethering, color: Colors.greenAccent, size: 56),
+                Icon(Icons.wifi_tethering, color: Theme.of(context).colorScheme.primary, size: 56),
                 const SizedBox(height: 20),
-                const Text('Enter Live Code',
+                Text('Enter Live Code',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 22,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text('Ask the scorer for the 6-character code',
-                    style: TextStyle(color: Colors.white54, fontSize: 14),
+                Text('Ask the scorer for the 6-character code',
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 14),
                     textAlign: TextAlign.center),
                 const SizedBox(height: 32),
                 TextField(
@@ -79,24 +77,24 @@ class _WatchLiveScreenState extends State<WatchLiveScreen> {
                   textCapitalization: TextCapitalization.characters,
                   textAlign: TextAlign.center,
                   maxLength: 6,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 8),
                   decoration: InputDecoration(
                     counterText: '',
                     hintText: '······',
-                    hintStyle: const TextStyle(
-                        color: Colors.white24, fontSize: 28, letterSpacing: 8),
+                    hintStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontSize: 28, letterSpacing: 8),
                     filled: true,
-                    fillColor: const Color(0xFF0D2B1E),
+                    fillColor: Theme.of(context).colorScheme.surface,
                     enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.green.shade700),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         borderRadius: BorderRadius.circular(12)),
                     focusedBorder: OutlineInputBorder(
                         borderSide:
-                            const BorderSide(color: Colors.greenAccent, width: 2),
+                            BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
                         borderRadius: BorderRadius.circular(12)),
                     errorText: _error,
                     errorStyle: const TextStyle(color: Colors.redAccent),
@@ -109,8 +107,8 @@ class _WatchLiveScreenState extends State<WatchLiveScreen> {
                   child: ElevatedButton(
                     onPressed: _loading ? null : _join,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold),
@@ -118,11 +116,11 @@ class _WatchLiveScreenState extends State<WatchLiveScreen> {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     child: _loading
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2))
+                                color: Theme.of(context).colorScheme.onSurface, strokeWidth: 2))
                         : const Text('Watch'),
                   ),
                 ),
@@ -147,10 +145,9 @@ class _LiveDisplayScreen extends StatelessWidget {
       stream: LiveSessionService.watchSession(code),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: Color(0xFF1B3A2D),
-            body: Center(
-                child: CircularProgressIndicator(color: Colors.greenAccent)),
+          return Scaffold(
+                  body: Center(
+                child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
           );
         }
         final data = snap.data?.data();
@@ -203,8 +200,7 @@ class _LiveDisplayScreen extends StatelessWidget {
   }
 
   static Widget _errorScaffold(String msg) => Scaffold(
-        backgroundColor: const Color(0xFF1B3A2D),
-        body: Center(
+          body: Center(
           child: Text(msg,
               style: const TextStyle(color: Colors.white54, fontSize: 16)),
         ),
@@ -233,10 +229,8 @@ class _MatchLiveScaffold extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B3A2D),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF0D2B1E),
-          iconTheme: const IconThemeData(color: Colors.white),
+          appBar: AppBar(
+            iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
           title: Row(children: [
             if (isActive) ...[
               const PulsingDot(),
@@ -245,18 +239,18 @@ class _MatchLiveScaffold extends StatelessWidget {
             Expanded(
               child: Text(
                 '${ms.setup.team1Name} vs ${ms.setup.team2Name}',
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 14),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ]),
-          bottom: const TabBar(
-            labelColor: Colors.greenAccent,
-            unselectedLabelColor: Colors.white54,
-            indicatorColor: Colors.greenAccent,
+          bottom: TabBar(
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+            indicatorColor: Theme.of(context).colorScheme.primary,
             tabs: [
               Tab(text: 'Live Score'),
               Tab(text: 'Scorecard'),
@@ -332,10 +326,8 @@ class _TournamentLiveScaffold extends StatelessWidget {
     return DefaultTabController(
       length: 5,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B3A2D),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF0D2B1E),
-          iconTheme: const IconThemeData(color: Colors.white),
+          appBar: AppBar(
+            iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
           title: Row(children: [
             if (isActive && !isOver) ...[
               const PulsingDot(),
@@ -343,17 +335,17 @@ class _TournamentLiveScaffold extends StatelessWidget {
             ],
             Expanded(
               child: Text(_displayTitle,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                       fontSize: 14),
                   overflow: TextOverflow.ellipsis),
             ),
           ]),
-          bottom: const TabBar(
-            labelColor: Colors.greenAccent,
-            unselectedLabelColor: Colors.white54,
-            indicatorColor: Colors.greenAccent,
+          bottom: TabBar(
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+            indicatorColor: Theme.of(context).colorScheme.primary,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             tabs: [
@@ -391,11 +383,21 @@ class _TournamentLiveScaffold extends StatelessWidget {
 
 // ── Live Score tab ────────────────────────────────────────────────────────────
 
-class _LiveScoreTab extends StatelessWidget {
+class _LiveScoreTab extends StatefulWidget {
+
   final MatchState ms;
   final Map<String, dynamic>? tick; // compact tick — preferred for instant updates
   final bool isActive;
   const _LiveScoreTab({required this.ms, required this.tick, required this.isActive});
+  @override
+  State<_LiveScoreTab> createState() => __LiveScoreTabState();
+}
+
+class __LiveScoreTabState extends State<_LiveScoreTab> {
+  MatchState get ms => widget.ms;
+  Map<String, dynamic>? get tick => widget.tick;
+  bool get isActive => widget.isActive;
+
 
   @override
   Widget build(BuildContext context) {
@@ -462,18 +464,18 @@ class _LiveScoreTab extends StatelessWidget {
         _card(child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text(battingTeam,
-                style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
-            Text('BATTING', style: TextStyle(color: Colors.greenAccent.shade100, fontSize: 10)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13, fontWeight: FontWeight.w600)),
+            Text('BATTING', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 10)),
           ]),
           const SizedBox(height: 6),
           Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text('$runs/$wickets',
-                style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.bold, height: 1)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 44, fontWeight: FontWeight.bold, height: 1)),
             const SizedBox(width: 10),
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Text('($overs.$rem ov)',
-                  style: const TextStyle(color: Colors.white54, fontSize: 16)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 16)),
             ),
           ]),
           if (isSecond && target > 0) ...[
@@ -485,7 +487,7 @@ class _LiveScoreTab extends StatelessWidget {
           ],
           const SizedBox(height: 6),
           Row(children: [
-            Text('CRR: $crr', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            Text('CRR: $crr', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
             if (isSecond && target > 0) ...[
               const SizedBox(width: 16),
               Text('RRR: $rrr', style: const TextStyle(color: Colors.amber, fontSize: 12)),
@@ -498,7 +500,7 @@ class _LiveScoreTab extends StatelessWidget {
           label: 'BATTING',
           child: Column(children: [
             _tickBatterRow(sxName, sxRuns, sxBalls, isStriker: true),
-            const Divider(color: Colors.white10, height: 16),
+            Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 16),
             _tickBatterRow(nsxName, nsxRuns, nsxBalls, isStriker: false),
           ]),
         ),
@@ -508,11 +510,11 @@ class _LiveScoreTab extends StatelessWidget {
           label: 'BOWLING',
           child: Row(children: [
             Expanded(child: Text(bwName,
-                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600))),
             Text('$bwWickets/$bwRuns',
-                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(width: 8),
-            Text('($bwOv ov)', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            Text('($bwOv ov)', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
           ]),
         ),
         const SizedBox(height: 10),
@@ -532,14 +534,14 @@ class _LiveScoreTab extends StatelessWidget {
         SizedBox(
           width: 16,
           child: Text(isStriker ? '●' : '',
-              style: const TextStyle(color: Colors.greenAccent, fontSize: 10)),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 10)),
         ),
         Expanded(child: Text(name,
-            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600))),
         Text('$runs',
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(width: 4),
-        Text('(${balls}b)', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        Text('(${balls}b)', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
       ]);
 
   // ── MatchState-based build (fallback for sessions without liveTick) ──────────
@@ -561,17 +563,17 @@ class _LiveScoreTab extends StatelessWidget {
         _card(child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text(ms.battingTeamName,
-                style: const TextStyle(
-                    color: Colors.white70,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontSize: 13,
                     fontWeight: FontWeight.w600)),
-            Text('BATTING', style: TextStyle(color: Colors.greenAccent.shade100, fontSize: 10)),
+            Text('BATTING', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 10)),
           ]),
           const SizedBox(height: 6),
           Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text('${inn.totalRuns}/${inn.wickets}',
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 44,
                     fontWeight: FontWeight.bold,
                     height: 1)),
@@ -579,7 +581,7 @@ class _LiveScoreTab extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Text('(${inn.oversDisplay} ov)',
-                  style: const TextStyle(color: Colors.white54, fontSize: 16)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 16)),
             ),
           ]),
           if (isSecond && target > 0) ...[
@@ -589,7 +591,7 @@ class _LiveScoreTab extends StatelessWidget {
           const SizedBox(height: 6),
           Row(children: [
             Text('CRR: ${_crr(inn)}',
-                style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
             if (isSecond && target > 0) ...[
               const SizedBox(width: 16),
               Text('RRR: ${_rrr(ms, inn, target)}',
@@ -604,7 +606,7 @@ class _LiveScoreTab extends StatelessWidget {
           label: 'BATTING',
           child: Column(children: [
             _batterRow(inn.striker, isStriker: true),
-            const Divider(color: Colors.white10, height: 16),
+            Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 16),
             _batterRow(inn.nonStriker, isStriker: false),
           ]),
         ),
@@ -651,12 +653,12 @@ class _LiveScoreTab extends StatelessWidget {
         padding: const EdgeInsets.all(10),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: Colors.white10,
+          color: Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(msg,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white38, fontSize: 12)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 12)),
       );
 
   Widget _targetRow(MatchState ms, Innings inn, int target) {
@@ -672,35 +674,35 @@ class _LiveScoreTab extends StatelessWidget {
         SizedBox(
           width: 16,
           child: Text(isStriker ? '●' : '',
-              style: const TextStyle(color: Colors.greenAccent, fontSize: 10)),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 10)),
         ),
         Expanded(
           child: Text(
             p.name + (p.isCaptain ? ' (c)' : '') + (p.isWicketKeeper ? ' †' : ''),
-            style: const TextStyle(
-                color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ),
         Text('${p.runsScored}',
-            style: const TextStyle(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(width: 4),
         Text('(${p.ballsFaced}b)',
-            style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
       ]);
 
   Widget _bowlerRow(Player p) => Row(children: [
         Expanded(
           child: Text(p.name,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600)),
         ),
         Text('${p.wicketsTaken}/${p.runsConceded}',
-            style: const TextStyle(
-                color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.bold)),
         const SizedBox(width: 8),
         Text('(${_bowlerOvers(p)} ov)',
-            style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
       ]);
 
   Widget _ballChip(String b) {
@@ -714,7 +716,7 @@ class _LiveScoreTab extends StatelessWidget {
     } else if (b.startsWith('Wd') || b.startsWith('Nb')) {
       bg = Colors.orange.shade700;
     } else {
-      bg = Colors.white12;
+      bg = Theme.of(context).colorScheme.outlineVariant;
     }
     return Container(
       width: 32,
@@ -722,8 +724,8 @@ class _LiveScoreTab extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
       child: Text(b,
-          style: const TextStyle(
-              color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface, fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -731,15 +733,15 @@ class _LiveScoreTab extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF0D2B1E),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (label != null) ...[
             Text(label,
-                style: const TextStyle(
-                    color: Colors.white38,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.4)),
@@ -775,6 +777,7 @@ class _LiveScoreTab extends StatelessWidget {
   }
 }
 
+
 // ── Scorecard tab ─────────────────────────────────────────────────────────────
 
 class _ScorecardTab extends StatelessWidget {
@@ -802,11 +805,21 @@ class _ScorecardTab extends StatelessWidget {
   }
 }
 
-class _InningsCard extends StatelessWidget {
+class _InningsCard extends StatefulWidget {
+
   final String label;
   final Innings inn;
   final bool isFirst;
   const _InningsCard({required this.label, required this.inn, required this.isFirst});
+  @override
+  State<_InningsCard> createState() => __InningsCardState();
+}
+
+class __InningsCardState extends State<_InningsCard> {
+  String get label => widget.label;
+  Innings get inn => widget.inn;
+  bool get isFirst => widget.isFirst;
+
 
   @override
   Widget build(BuildContext context) {
@@ -821,45 +834,45 @@ class _InningsCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
           child: Text(label,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                   fontSize: 13)),
         ),
-        const Divider(color: Colors.white10, height: 1),
+        Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
         // Batting header
         _tableHeader(['BATTER', 'R', 'B', '4s', '6s', 'SR']),
         ...batted.map((p) => _batterTableRow(p)),
-        const Divider(color: Colors.white10, height: 1),
+        Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Row(children: [
-            const Expanded(child: Text('Extras',
-                style: TextStyle(color: Colors.white54, fontSize: 12))),
+            Expanded(child: Text('Extras',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12))),
             Text('${inn.totalExtras}',
-                style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
           ]),
         ),
-        const Divider(color: Colors.white10, height: 1),
+        Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Row(children: [
-            const Expanded(child: Text('Total',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13))),
+            Expanded(child: Text('Total',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13))),
             Text('${inn.totalRuns}/${inn.wickets} (${inn.oversDisplay} ov)',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13)),
           ]),
         ),
         if (bowled.isNotEmpty) ...[
-          const Divider(color: Colors.white10, height: 1),
+          Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
           _tableHeader(['BOWLER', 'O', 'M', 'R', 'W', 'Econ']),
           ...bowled.map((p) => _bowlerTableRow(p)),
         ],
@@ -872,12 +885,12 @@ class _InningsCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(children: [
           Expanded(child: Text(cols[0],
-              style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold))),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10, fontWeight: FontWeight.bold))),
           ...cols.skip(1).map((c) => SizedBox(
                 width: 36,
                 child: Text(c,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10, fontWeight: FontWeight.bold)),
               )),
         ]),
       );
@@ -891,11 +904,11 @@ class _InningsCard extends StatelessWidget {
       child: Row(children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(p.name + (p.isCaptain ? ' (c)' : '') + (p.isWicketKeeper ? ' †' : ''),
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.w600),
               overflow: TextOverflow.ellipsis),
           if (p.dismissalInfo.isNotEmpty)
             Text(p.dismissalInfo,
-                style: const TextStyle(color: Colors.white38, fontSize: 10),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10),
                 overflow: TextOverflow.ellipsis),
         ])),
         _cell('${p.runsScored}', bold: true),
@@ -916,7 +929,7 @@ class _InningsCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       child: Row(children: [
         Expanded(child: Text(p.name,
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.w600),
             overflow: TextOverflow.ellipsis)),
         _cell(overs),
         _cell('${p.maidens}'),
@@ -932,17 +945,26 @@ class _InningsCard extends StatelessWidget {
         child: Text(v,
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: bold ? Colors.white : Colors.white70,
+                color: bold ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 12,
                 fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
       );
 }
 
+
 // ── Points Table tab ──────────────────────────────────────────────────────────
 
-class _PointsTableTab extends StatelessWidget {
+class _PointsTableTab extends StatefulWidget {
+
   final AnyTournament tournament;
   const _PointsTableTab({required this.tournament});
+  @override
+  State<_PointsTableTab> createState() => __PointsTableTabState();
+}
+
+class __PointsTableTabState extends State<_PointsTableTab> {
+  AnyTournament get tournament => widget.tournament;
+
 
   @override
   Widget build(BuildContext context) {
@@ -1025,12 +1047,12 @@ class _PointsTableTab extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(children: [
           Expanded(child: Text(seg.formatLabel,
-              style: const TextStyle(color: Colors.white54, fontSize: 12))),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12))),
           Text('$t1w – $t2w',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
           const SizedBox(width: 8),
           Text('($played played)',
-              style: const TextStyle(color: Colors.white38, fontSize: 11)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
         ]),
       );
     });
@@ -1039,20 +1061,20 @@ class _PointsTableTab extends StatelessWidget {
 
   Widget _tableCard(String title, List<Widget> children) => Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF0D2B1E),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
             child: Text(title,
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 13)),
           ),
-          const Divider(color: Colors.white10, height: 1),
+          Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
           ...children.map((c) => Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2), child: c)),
           const SizedBox(height: 8),
         ]),
@@ -1061,14 +1083,14 @@ class _PointsTableTab extends StatelessWidget {
   Widget _standingHeader() => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(children: [
-          const Expanded(child: Text('Team',
-              style: TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold))),
+          Expanded(child: Text('Team',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11, fontWeight: FontWeight.bold))),
           for (final h in ['P', 'W', 'L', 'T', 'Pts'])
             SizedBox(
               width: 32,
               child: Text(h,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11, fontWeight: FontWeight.bold)),
             ),
           const SizedBox(width: 52),
         ]),
@@ -1078,7 +1100,7 @@ class _PointsTableTab extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 5),
         child: Row(children: [
           Expanded(child: Text(name,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
               overflow: TextOverflow.ellipsis)),
           for (final v in [w + l + t, w, l, t, pts])
             SizedBox(
@@ -1086,7 +1108,7 @@ class _PointsTableTab extends StatelessWidget {
               child: Text('$v',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: v == pts ? Colors.greenAccent : Colors.white70,
+                      color: v == pts ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 13,
                       fontWeight: v == pts ? FontWeight.bold : FontWeight.normal)),
             ),
@@ -1094,11 +1116,12 @@ class _PointsTableTab extends StatelessWidget {
             width: 52,
             child: Text(nrr != null ? 'NRR $nrr' : '',
                 textAlign: TextAlign.end,
-                style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10)),
           ),
         ]),
       );
 }
+
 
 // ── Matches tab ───────────────────────────────────────────────────────────────
 
@@ -1138,9 +1161,17 @@ class _MatchesTab extends StatelessWidget {
   }
 }
 
-class _MatchTile extends StatelessWidget {
+class _MatchTile extends StatefulWidget {
+
   final TournamentMatch match;
   const _MatchTile({required this.match});
+  @override
+  State<_MatchTile> createState() => __MatchTileState();
+}
+
+class __MatchTileState extends State<_MatchTile> {
+  TournamentMatch get match => widget.match;
+
 
   @override
   Widget build(BuildContext context) {
@@ -1149,24 +1180,24 @@ class _MatchTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-            color: done ? Colors.white12 : Colors.greenAccent.withValues(alpha: 0.3)),
+            color: done ? Theme.of(context).colorScheme.outlineVariant : Theme.of(context).colorScheme.outline),
       ),
       child: Row(children: [
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('${match.team1Name} vs ${match.team2Name}',
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 13)),
             const SizedBox(height: 2),
             Text(match.phase,
-                style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
             if (done && r != null) ...[
               const SizedBox(height: 4),
               Text(r.matchResult,
-                  style: const TextStyle(color: Colors.greenAccent, fontSize: 12)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12)),
             ],
           ]),
         ),
@@ -1174,12 +1205,12 @@ class _MatchTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.greenAccent.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.4)),
+              border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)),
             ),
-            child: const Text('In Progress',
-                style: TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+            child: Text('In Progress',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 10, fontWeight: FontWeight.bold)),
           ),
         if (done && r != null)
           _miniScore(r),
@@ -1192,12 +1223,13 @@ class _MatchTile extends StatelessWidget {
     final inn2 = r.innings2;
     return Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
       Text('${r.setup.team1Name}: ${inn1.totalRuns}/${inn1.wickets}',
-          style: const TextStyle(color: Colors.white60, fontSize: 11)),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 11)),
       Text('${r.setup.team2Name}: ${inn2.totalRuns}/${inn2.wickets}',
-          style: const TextStyle(color: Colors.white60, fontSize: 11)),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 11)),
     ]);
   }
 }
+
 
 // ── Squad tab ─────────────────────────────────────────────────────────────────
 
@@ -1236,14 +1268,14 @@ class _SquadTabState extends State<_SquadTab> {
                       duration: const Duration(milliseconds: 150),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: sel ? Colors.green.shade700 : Colors.white10,
+                        color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: sel ? Colors.greenAccent : Colors.white24),
+                            color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                       ),
                       child: Text(widget.teams[i].name,
                           style: TextStyle(
-                              color: sel ? Colors.white : Colors.white60,
+                              color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                               fontWeight: sel ? FontWeight.bold : FontWeight.normal,
                               fontSize: 13)),
                     ),
@@ -1257,7 +1289,7 @@ class _SquadTabState extends State<_SquadTab> {
         child: ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: widget.teams[_idx].players.length,
-          separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+          separatorBuilder: (_, __) => Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
           itemBuilder: (_, i) {
             final p = widget.teams[_idx].players[i];
             final tags = <String>[
@@ -1274,14 +1306,14 @@ class _SquadTabState extends State<_SquadTab> {
               child: Row(children: [
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: Colors.green.shade900,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   child: Text('${i + 1}',
-                      style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(p.name,
-                      style: const TextStyle(color: Colors.white, fontSize: 14)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
                 ),
                 for (final tag in tags)
                   Container(
@@ -1302,11 +1334,11 @@ class _SquadTabState extends State<_SquadTab> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white10,
+                    color: Theme.of(context).colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(roleLabel,
-                      style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 10)),
                 ),
               ]),
             );
@@ -1319,10 +1351,19 @@ class _SquadTabState extends State<_SquadTab> {
 
 // ── No match in progress ──────────────────────────────────────────────────────
 
-class _NoMatchInProgress extends StatelessWidget {
+class _NoMatchInProgress extends StatefulWidget {
+
   final bool isOver;
   final AnyTournament tournament;
   const _NoMatchInProgress({required this.isOver, required this.tournament});
+  @override
+  State<_NoMatchInProgress> createState() => __NoMatchInProgressState();
+}
+
+class __NoMatchInProgressState extends State<_NoMatchInProgress> {
+  bool get isOver => widget.isOver;
+  AnyTournament get tournament => widget.tournament;
+
 
   TournamentMatch? get _lastPlayed {
     final all = _StatsTab._allPlayedMatches(tournament);
@@ -1339,14 +1380,14 @@ class _NoMatchInProgress extends StatelessWidget {
         if (isOver)
           _banner(Icons.emoji_events, Colors.amber, 'Tournament Completed')
         else
-          _banner(Icons.hourglass_empty, Colors.white38, 'Break — No match in progress'),
+          _banner(Icons.hourglass_empty, Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), 'Break — No match in progress'),
         if (last != null) ...[
           const SizedBox(height: 20),
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
             child: Text('LAST RESULT',
                 style: TextStyle(
-                    color: Colors.white38,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.4)),
@@ -1355,8 +1396,8 @@ class _NoMatchInProgress extends StatelessWidget {
           _MatchTile(match: last),
         ],
         const SizedBox(height: 20),
-        const Text('View Points Table, Stats and Matches tabs for full details',
-            style: TextStyle(color: Colors.white24, fontSize: 12),
+        Text('View Points Table, Stats and Matches tabs for full details',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontSize: 12),
             textAlign: TextAlign.center),
       ]),
     );
@@ -1379,6 +1420,7 @@ class _NoMatchInProgress extends StatelessWidget {
         ]),
       );
 }
+
 
 // ── Stats tab ─────────────────────────────────────────────────────────────────
 
@@ -1488,9 +1530,9 @@ class _StatsTabState extends State<_StatsTab> {
   Widget build(BuildContext context) {
     final agg = _buildAgg();
     if (agg.isEmpty) {
-      return const Center(
+      return Center(
         child: Text('No matches played yet',
-            style: TextStyle(color: Colors.white38, fontSize: 15)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 15)),
       );
     }
 
@@ -1521,19 +1563,19 @@ class _StatsTabState extends State<_StatsTab> {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: _showBatting
-                      ? Colors.green.shade700
-                      : Colors.white10,
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: const BorderRadius.horizontal(
                       left: Radius.circular(10)),
                   border: Border.all(
                       color: _showBatting
-                          ? Colors.greenAccent
-                          : Colors.white24),
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                 ),
                 child: Text('Batting',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        color: _showBatting ? Colors.white : Colors.white54,
+                        color: _showBatting ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                         fontWeight: _showBatting
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -1549,19 +1591,19 @@ class _StatsTabState extends State<_StatsTab> {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: !_showBatting
-                      ? Colors.green.shade700
-                      : Colors.white10,
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: const BorderRadius.horizontal(
                       right: Radius.circular(10)),
                   border: Border.all(
                       color: !_showBatting
-                          ? Colors.greenAccent
-                          : Colors.white24),
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                 ),
                 child: Text('Bowling',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        color: !_showBatting ? Colors.white : Colors.white54,
+                        color: !_showBatting ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                         fontWeight: !_showBatting
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -1576,7 +1618,7 @@ class _StatsTabState extends State<_StatsTab> {
       _showBatting
           ? _battingHeader()
           : _bowlingHeader(),
-      const Divider(color: Colors.white10, height: 1),
+      Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
       // Rows
       Expanded(
         child: ListView.separated(
@@ -1584,7 +1626,7 @@ class _StatsTabState extends State<_StatsTab> {
           itemCount:
               _showBatting ? batters.length : bowlers.length,
           separatorBuilder: (_, __) =>
-              const Divider(color: Colors.white10, height: 1),
+              Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
           itemBuilder: (_, i) => _showBatting
               ? _battingRow(batters[i], i + 1)
               : _bowlingRow(bowlers[i], i + 1),
@@ -1599,10 +1641,10 @@ class _StatsTabState extends State<_StatsTab> {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         child: Row(children: [
           const SizedBox(width: 22),
-          const Expanded(
+          Expanded(
               child: Text('BATTER',
                   style: TextStyle(
-                      color: Colors.white38,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                       fontSize: 10,
                       fontWeight: FontWeight.bold))),
           for (final h in ['Inn', 'Runs', 'HS', 'Avg', 'SR', '4s', '6s'])
@@ -1616,10 +1658,10 @@ class _StatsTabState extends State<_StatsTab> {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         child: Row(children: [
           const SizedBox(width: 22),
-          const Expanded(
+          Expanded(
               child: Text('BOWLER',
                   style: TextStyle(
-                      color: Colors.white38,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                       fontSize: 10,
                       fontWeight: FontWeight.bold))),
           for (final h in ['Wkt', 'Ov', 'Runs', 'Econ', 'Mdn'])
@@ -1634,27 +1676,27 @@ class _StatsTabState extends State<_StatsTab> {
           SizedBox(
             width: 22,
             child: Text('$rank',
-                style: const TextStyle(
-                    color: Colors.white38, fontSize: 11)),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
           ),
           Expanded(
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(s.name,
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 13,
                           fontWeight: FontWeight.w600),
                       overflow: TextOverflow.ellipsis),
                   Text(s.team,
-                      style: const TextStyle(
-                          color: Colors.white38, fontSize: 10),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10),
                       overflow: TextOverflow.ellipsis),
                 ]),
           ),
           _dCell('${s.battingInnings}'),
-          _dCell('${s.runs}', bold: true, color: Colors.greenAccent),
+          _dCell('${s.runs}', bold: true, color: Theme.of(context).colorScheme.primary),
           _dCell('${s.hs}'),
           _dCell(s.avg.toStringAsFixed(1)),
           _dCell(s.sr.toStringAsFixed(1)),
@@ -1670,26 +1712,26 @@ class _StatsTabState extends State<_StatsTab> {
           SizedBox(
             width: 22,
             child: Text('$rank',
-                style: const TextStyle(
-                    color: Colors.white38, fontSize: 11)),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
           ),
           Expanded(
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(s.name,
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 13,
                           fontWeight: FontWeight.w600),
                       overflow: TextOverflow.ellipsis),
                   Text(s.team,
-                      style: const TextStyle(
-                          color: Colors.white38, fontSize: 10),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10),
                       overflow: TextOverflow.ellipsis),
                 ]),
           ),
-          _dCell('${s.wickets}', bold: true, color: Colors.greenAccent),
+          _dCell('${s.wickets}', bold: true, color: Theme.of(context).colorScheme.primary),
           _dCell(s.oversStr),
           _dCell('${s.runsConceded}'),
           _dCell(s.economy.toStringAsFixed(2)),
@@ -1701,20 +1743,19 @@ class _StatsTabState extends State<_StatsTab> {
         width: 38,
         child: Text(h,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-                color: Colors.white38,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                 fontSize: 10,
                 fontWeight: FontWeight.bold)),
       );
 
-  Widget _dCell(String v,
-          {bool bold = false, Color color = Colors.white70}) =>
+  Widget _dCell(String v, {bool bold = false, Color? color}) =>
       SizedBox(
         width: 38,
         child: Text(v,
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: bold ? color : Colors.white70,
+                color: bold ? (color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)) : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 12,
                 fontWeight:
                     bold ? FontWeight.bold : FontWeight.normal)),

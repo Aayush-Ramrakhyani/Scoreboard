@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../database/app_database.dart';
+import '../main.dart';
 import '../saved_template.dart';
 import '../services/firebase_service.dart';
 import '../services/template_service.dart';
@@ -18,6 +19,9 @@ import 'tri_series_setup_screen.dart';
 import 'big_tournament_setup_screen.dart';
 import 'international_cup_setup_screen.dart';
 
+/// Home dashboard after login. Lists all scoring modes (quick match, series,
+/// tournament, international cup) and provides access to history, my teams,
+/// saved templates, and the live-watch feature.
 class ModeSelectScreen extends StatefulWidget {
   const ModeSelectScreen({super.key});
 
@@ -98,8 +102,6 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
     _checkSaved();
   }
 
-  // ── Template launch flow ──────────────────────────────────────────────────
-
   Future<void> _launch(String type) async {
     final existing = await TemplateService.loadByType(type);
     if (!mounted) return;
@@ -115,23 +117,27 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
   Future<String?> _askSetupName(String type) {
     final label = _typeLabel(type);
     final ctrl = TextEditingController();
+    final cs = Theme.of(context).colorScheme;
     return showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF0D2B1E),
+        backgroundColor: cs.surface,
         title: Text('Name your $label',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                color: cs.onSurface, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintStyle: TextStyle(color: Colors.white24),
+          style: TextStyle(color: cs.onSurface),
+          decoration: InputDecoration(
+            hintText: label,
+            hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.38)),
             enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.white24)),
+                borderSide: BorderSide(color: cs.outline)),
             focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.greenAccent)),
+                borderSide: BorderSide(color: cs.onSurface, width: 1.5)),
+            filled: false,
           ),
           onSubmitted: (v) =>
               Navigator.pop(ctx, v.trim().isEmpty ? label : v.trim()),
@@ -139,16 +145,17 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, label),
-              child: const Text('Skip',
-                  style: TextStyle(color: Colors.white38))),
+              child: Text('Skip',
+                  style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.45)))),
           TextButton(
             onPressed: () {
               final v = ctrl.text.trim();
               Navigator.pop(ctx, v.isEmpty ? label : v);
             },
-            child: const Text('Continue',
+            child: Text('Continue',
                 style: TextStyle(
-                    color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+                    color: cs.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -158,9 +165,6 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
   void _showNewOrLoad(String type, List<SavedTemplate> existing) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0D2B1E),
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       isScrollControlled: true,
       builder: (ctx) => _NewOrLoadSheet(
         type: type,
@@ -217,9 +221,10 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final hasResume = _hasSavedMatch || _hasSavedTournament;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       body: SingleChildScrollView(
         child: Center(
           child: ConstrainedBox(
@@ -229,34 +234,34 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── Profile bar ────────────────────────────────────────
-                  _buildProfileBar(),
+                  _buildProfileBar(cs),
                   const SizedBox(height: 24),
-                  const Icon(Icons.sports_cricket,
-                      color: Colors.greenAccent, size: 64),
+                  Icon(Icons.sports_cricket, color: cs.onSurface, size: 64),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Cricket Scoreboard',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: cs.onSurface,
                         fontSize: 28,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Choose a match format to begin',
-                    style: TextStyle(color: Colors.white54, fontSize: 15),
+                    style: TextStyle(
+                        color: cs.onSurface.withValues(alpha: 0.55),
+                        fontSize: 15),
                   ),
 
-                  // ── Resume section ──────────────────────────────────────
                   if (hasResume) ...[
                     const SizedBox(height: 36),
-                    const Row(children: [
-                      Icon(Icons.history, color: Colors.amber, size: 14),
-                      SizedBox(width: 6),
+                    Row(children: [
+                      Icon(Icons.history,
+                          color: cs.onSurface.withValues(alpha: 0.7), size: 14),
+                      const SizedBox(width: 6),
                       Text('RESUME',
                           style: TextStyle(
-                              color: Colors.amber,
+                              color: cs.onSurface.withValues(alpha: 0.7),
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.5)),
@@ -264,135 +269,84 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
                     const SizedBox(height: 10),
                     if (_hasSavedMatch)
                       _resumeCard(
-                        context,
+                        cs: cs,
                         icon: Icons.sports_cricket,
                         title: 'Resume Match',
                         subtitle: 'Continue your in-progress game',
-                        color: Colors.amber.shade700,
                         onTap: _resumeMatch,
                       ),
                     if (_hasSavedMatch && _hasSavedTournament)
                       const SizedBox(height: 10),
                     if (_hasSavedTournament)
                       _resumeCard(
-                        context,
+                        cs: cs,
                         icon: Icons.emoji_events,
                         title: 'Resume Tournament',
                         subtitle: 'Continue your in-progress tournament',
-                        color: Colors.deepPurple.shade400,
                         onTap: _resumeTournament,
                       ),
                     const SizedBox(height: 24),
-                    const Divider(color: Colors.white12),
+                    Divider(color: cs.outlineVariant),
                   ],
 
-                  // ── New game section ────────────────────────────────────
                   const SizedBox(height: 28),
-                  _modeCard(
-                    context,
-                    icon: Icons.sports_cricket,
-                    title: 'Single Match',
-                    subtitle: 'One-off game between two teams',
-                    color: Colors.green.shade700,
-                    onTap: () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const SetupScreen())),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.sports_cricket,
+                      title: 'Single Match',
+                      subtitle: 'One-off game between two teams',
+                      onTap: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const SetupScreen()))),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.replay,
-                    title: 'Series',
-                    subtitle: 'Multiple matches — winner by most wins',
-                    color: Colors.teal.shade700,
-                    onTap: () => _launch('series'),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.replay,
+                      title: 'Series',
+                      subtitle: 'Multiple matches — winner by most wins',
+                      onTap: () => _launch('series')),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.view_list_rounded,
-                    title: 'Multi-Format Series',
-                    subtitle:
-                        'Mix T20 + ODI + Test · separate winner per format',
-                    color: Colors.deepOrange.shade700,
-                    onTap: () => _launch('multiformat'),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.view_list_rounded,
+                      title: 'Multi-Format Series',
+                      subtitle: 'Mix T20 + ODI + Test · separate winner per format',
+                      onTap: () => _launch('multiformat')),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.group,
-                    title: 'Tri-Series',
-                    subtitle: '3 teams · 6 league matches · top 2 play Final',
-                    color: Colors.indigo.shade600,
-                    onTap: () => _launch('triseries'),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.group,
+                      title: 'Tri-Series',
+                      subtitle: '3 teams · 6 league matches · top 2 play Final',
+                      onTap: () => _launch('triseries')),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.emoji_events,
-                    title: 'Big Tournament',
-                    subtitle: 'Groups · Super Groups · Semis · Final',
-                    color: Colors.amber.shade800,
-                    onTap: () => _launch('tournament'),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.emoji_events,
+                      title: 'Big Tournament',
+                      subtitle: 'Groups · Super Groups · Semis · Final',
+                      onTap: () => _launch('tournament')),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.public,
-                    title: 'International Cup',
-                    subtitle: 'ODI WC · T20 WC · Asia Cup · Champions Trophy',
-                    color: Colors.cyan.shade800,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const InternationalCupSetupScreen()),
-                    ),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.public,
+                      title: 'International Cup',
+                      subtitle: 'ODI WC · T20 WC · Asia Cup · Champions Trophy',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => const InternationalCupSetupScreen()))),
                   const SizedBox(height: 28),
-                  const Divider(color: Colors.white12),
+                  Divider(color: cs.outlineVariant),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.groups,
-                    title: 'My Teams',
-                    subtitle: 'Save & manage your squads for reuse',
-                    color: Colors.purple.shade400,
-                    onTap: () => Navigator.push(context,
-                        MaterialPageRoute(
-                            builder: (_) => const MyTeamsScreen())),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.groups,
+                      title: 'My Teams',
+                      subtitle: 'Save & manage your squads for reuse',
+                      onTap: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const MyTeamsScreen()))),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.bookmark_outlined,
-                    title: 'My Setups',
-                    subtitle: 'Saved tournament & series templates · replay seasons',
-                    color: Colors.deepPurple.shade400,
-                    onTap: () => Navigator.push(context,
-                        MaterialPageRoute(
-                            builder: (_) => const SavedTemplatesScreen())),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.bookmark_outlined,
+                      title: 'My Setups',
+                      subtitle: 'Saved tournament & series templates · replay seasons',
+                      onTap: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const SavedTemplatesScreen()))),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.history,
-                    title: 'History',
-                    subtitle: 'View all past matches & tournaments',
-                    color: Colors.blueGrey.shade400,
-                    onTap: () => Navigator.push(context,
-                        MaterialPageRoute(
-                            builder: (_) => const HistoryScreen())),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.history,
+                      title: 'History',
+                      subtitle: 'View all past matches & tournaments',
+                      onTap: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const HistoryScreen()))),
                   const SizedBox(height: 14),
-                  _modeCard(
-                    context,
-                    icon: Icons.wifi_tethering,
-                    title: 'Watch Live',
-                    subtitle: 'View a live match or tournament — enter the code',
-                    color: Colors.teal.shade300,
-                    onTap: () => Navigator.push(context,
-                        MaterialPageRoute(
-                            builder: (_) => const WatchLiveScreen())),
-                  ),
+                  _modeCard(cs: cs, icon: Icons.wifi_tethering,
+                      title: 'Watch Live',
+                      subtitle: 'View a live match or tournament — enter the code',
+                      onTap: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const WatchLiveScreen()))),
                 ],
               ),
             ),
@@ -402,7 +356,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
     );
   }
 
-  Widget _buildProfileBar() {
+  Widget _buildProfileBar(ColorScheme cs) {
     final user = FirebaseAuth.instance.currentUser;
     final label = user?.displayName?.isNotEmpty == true
         ? user!.displayName!
@@ -410,29 +364,49 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: cs.onSurface.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(children: [
         CircleAvatar(
           radius: 16,
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: cs.onSurface.withValues(alpha: 0.15),
           child: Text(
             label.isNotEmpty ? label[0].toUpperCase() : '?',
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            style: TextStyle(
+                color: cs.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 14),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(label,
               overflow: TextOverflow.ellipsis,
-              style:
-                  const TextStyle(color: Colors.white70, fontSize: 13)),
+              style: TextStyle(
+                  color: cs.onSurface.withValues(alpha: 0.8), fontSize: 13)),
         ),
+        // Theme toggle — GestureDetector captures the exact tap position
+        // so the circular reveal expands from the button center.
+        ValueListenableBuilder<bool>(
+          valueListenable: themeNotifier,
+          builder: (_, isLight, __) => GestureDetector(
+            onTapDown: (d) => toggleTheme(origin: d.globalPosition),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                isLight ? Icons.dark_mode : Icons.light_mode,
+                color: cs.onSurface.withValues(alpha: 0.6),
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
         IconButton(
-          icon: const Icon(Icons.logout, color: Colors.white38, size: 20),
+          icon: Icon(Icons.logout,
+              color: cs.onSurface.withValues(alpha: 0.45), size: 20),
           tooltip: 'Sign out',
           onPressed: _logout,
           padding: EdgeInsets.zero,
@@ -442,12 +416,11 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
     );
   }
 
-  Widget _resumeCard(
-    BuildContext context, {
+  Widget _resumeCard({
+    required ColorScheme cs,
     required IconData icon,
     required String title,
     required String subtitle,
-    required Color color,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -456,47 +429,49 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha:0.15),
+          color: cs.onSurface.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha:0.7), width: 1.5),
+          border: Border.all(color: cs.onSurface.withValues(alpha: 0.25),
+              width: 1.5),
         ),
         child: Row(children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withValues(alpha:0.25),
+              color: cs.onSurface.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child:
+                Icon(icon, color: cs.onSurface.withValues(alpha: 0.8), size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
                       style: TextStyle(
-                          color: color,
+                          color: cs.onSurface,
                           fontSize: 15,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style:
-                          const TextStyle(color: Colors.white54, fontSize: 12)),
+                      style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.55),
+                          fontSize: 12)),
                 ]),
           ),
-          Icon(Icons.play_circle, color: color, size: 28),
+          Icon(Icons.play_circle,
+              color: cs.onSurface.withValues(alpha: 0.7), size: 28),
         ]),
       ),
     );
   }
 
-  Widget _modeCard(
-    BuildContext context, {
+  Widget _modeCard({
+    required ColorScheme cs,
     required IconData icon,
     required String title,
     required String subtitle,
-    required Color color,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -505,43 +480,44 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: color.withValues(alpha:0.15),
+          color: cs.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha:0.5)),
+          border: Border.all(color: cs.outlineVariant),
         ),
         child: Row(children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withValues(alpha:0.25),
+              color: cs.onSurface.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 26),
+            child: Icon(icon, color: cs.onSurface, size: 26),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: cs.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 3),
                   Text(subtitle,
-                      style:
-                          const TextStyle(color: Colors.white54, fontSize: 13)),
+                      style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.55),
+                          fontSize: 13)),
                 ]),
           ),
-          Icon(Icons.chevron_right, color: color.withValues(alpha:0.7)),
+          Icon(Icons.chevron_right,
+              color: cs.onSurface.withValues(alpha: 0.5)),
         ]),
       ),
     );
   }
 }
 
-// ── Bottom sheet for New vs Load ─────────────────────────────────────────────
+// ── Bottom sheet for New vs Load ──────────────────────────────────────────────
 
 class _NewOrLoadSheet extends StatelessWidget {
   final String type;
@@ -556,14 +532,6 @@ class _NewOrLoadSheet extends StatelessWidget {
     required this.onLoad,
   });
 
-  Color get _color => switch (type) {
-        'series' => Colors.teal,
-        'triseries' => Colors.indigo,
-        'tournament' => Colors.amber,
-        'multiformat' => Colors.deepOrange,
-        _ => Colors.greenAccent,
-      };
-
   String get _label => switch (type) {
         'series' => 'Series',
         'triseries' => 'Tri-Series',
@@ -574,7 +542,7 @@ class _NewOrLoadSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = _color;
+    final cs = Theme.of(context).colorScheme;
     final label = _label;
     return SafeArea(
       child: SingleChildScrollView(
@@ -588,7 +556,7 @@ class _NewOrLoadSheet extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: cs.outlineVariant,
                     borderRadius: BorderRadius.circular(2)),
               ),
             ),
@@ -597,26 +565,29 @@ class _NewOrLoadSheet extends StatelessWidget {
               onTap: onNew,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: c.withValues(alpha: 0.12),
+                  color: cs.onSurface.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: c.withValues(alpha: 0.4)),
+                  border: Border.all(color: cs.outline),
                 ),
                 child: Row(children: [
-                  Icon(Icons.add_circle_outline, color: c, size: 20),
+                  Icon(Icons.add_circle_outline, color: cs.onSurface, size: 20),
                   const SizedBox(width: 10),
                   Text('Start New $label',
                       style: TextStyle(
-                          color: c,
+                          color: cs.onSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 14)),
                 ]),
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Or continue from a saved setup:',
-                style: TextStyle(color: Colors.white38, fontSize: 12)),
+            Text('Or continue from a saved setup:',
+                style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.45),
+                    fontSize: 12)),
             const SizedBox(height: 10),
             ...templates.take(6).map((t) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -627,9 +598,10 @@ class _NewOrLoadSheet extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: cs.onSurface.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white10),
+                        border:
+                            Border.all(color: cs.outlineVariant),
                       ),
                       child: Row(children: [
                         Expanded(
@@ -637,17 +609,21 @@ class _NewOrLoadSheet extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(t.name,
-                                    style: const TextStyle(
-                                        color: Colors.white,
+                                    style: TextStyle(
+                                        color: cs.onSurface,
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 2),
                                 Text(
                                   t.type == 'multiformat'
-                                      ? t.segments.map((s) => s.label).join(' + ')
+                                      ? t.segments
+                                          .map((s) => s.label)
+                                          .join(' + ')
                                       : '${t.teamsSummary} · ${t.formatLabel}',
-                                  style: const TextStyle(
-                                      color: Colors.white38, fontSize: 11),
+                                  style: TextStyle(
+                                      color: cs.onSurface
+                                          .withValues(alpha: 0.45),
+                                      fontSize: 11),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -658,13 +634,13 @@ class _NewOrLoadSheet extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: c.withValues(alpha: 0.15),
+                            color: cs.onSurface.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'Season ${t.season + 1}',
                             style: TextStyle(
-                                color: c,
+                                color: cs.onSurface,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold),
                           ),

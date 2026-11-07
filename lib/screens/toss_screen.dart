@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models.dart';
 import 'match_screen.dart';
 
+/// Captures the toss result (winner + bat/field choice) and derives which
+/// team bats first before pushing to [MatchScreen].
 class TossScreen extends StatefulWidget {
   final MatchSetup setup;
   final void Function(MatchState)? onMatchComplete;
@@ -12,7 +14,7 @@ class TossScreen extends StatefulWidget {
 
 class _TossScreenState extends State<TossScreen> {
   String? _tossWinner;
-  String? _choice; // 'bat' or 'bowl'
+  String? _choice;
 
   void _proceed() {
     if (_tossWinner == null || _choice == null) {
@@ -22,9 +24,9 @@ class _TossScreenState extends State<TossScreen> {
       return;
     }
     final state = MatchState(widget.setup);
-    // team1BatsFirst = true if team1 won toss & chose bat, or team2 won & chose bowl
     final team1WonToss = _tossWinner == widget.setup.team1Name;
     final choseBat = _choice == 'bat';
+    // team1 bats first when: team1 won toss AND chose bat, OR team1 lost toss AND opposition chose field
     state.team1BatsFirst = (team1WonToss && choseBat) || (!team1WonToss && !choseBat);
     state.startInnings();
 
@@ -38,14 +40,13 @@ class _TossScreenState extends State<TossScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final t1 = widget.setup.team1Name;
     final t2 = widget.setup.team2Name;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Toss', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Toss'),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -56,27 +57,35 @@ class _TossScreenState extends State<TossScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.monetization_on, color: Colors.amber, size: 64),
+                Icon(Icons.monetization_on, color: cs.onSurface, size: 64),
                 const SizedBox(height: 16),
-                const Text('Toss', textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                Text('Toss',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold)),
                 const SizedBox(height: 32),
-                const Text('Who won the toss?',
-                    style: TextStyle(color: Colors.white70, fontSize: 16)),
+                Text('Who won the toss?',
+                    style: TextStyle(
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                        fontSize: 16)),
                 const SizedBox(height: 12),
-                _teamButton(t1),
+                _teamButton(cs, t1),
                 const SizedBox(height: 10),
-                _teamButton(t2),
+                _teamButton(cs, t2),
                 const SizedBox(height: 28),
                 if (_tossWinner != null) ...[
                   Text('$_tossWinner chose to...',
-                      style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                      style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.7),
+                          fontSize: 16)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: _choiceButton('bat', Icons.sports_cricket)),
+                      Expanded(child: _choiceButton(cs, 'bat', Icons.sports_cricket)),
                       const SizedBox(width: 12),
-                      Expanded(child: _choiceButton('bowl', Icons.album)),
+                      Expanded(child: _choiceButton(cs, 'bowl', Icons.album)),
                     ],
                   ),
                   const SizedBox(height: 28),
@@ -84,11 +93,11 @@ class _TossScreenState extends State<TossScreen> {
                 ElevatedButton(
                   onPressed: _proceed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    textStyle: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Start Match'),
                 ),
@@ -100,7 +109,7 @@ class _TossScreenState extends State<TossScreen> {
     );
   }
 
-  Widget _teamButton(String name) {
+  Widget _teamButton(ColorScheme cs, String name) {
     final selected = _tossWinner == name;
     return GestureDetector(
       onTap: () => setState(() => _tossWinner = name),
@@ -108,24 +117,29 @@ class _TossScreenState extends State<TossScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         decoration: BoxDecoration(
-          color: selected ? Colors.green.shade700 : const Color(0xFF0D2B1E),
+          color: selected
+              ? cs.onSurface.withValues(alpha: 0.12)
+              : cs.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? Colors.greenAccent : Colors.white24,
+            color: selected ? cs.onSurface : cs.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
         child: Text(name,
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: selected ? Colors.white : Colors.white60,
+                color: selected
+                    ? cs.onSurface
+                    : cs.onSurface.withValues(alpha: 0.6),
                 fontSize: 16,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
+                fontWeight:
+                    selected ? FontWeight.bold : FontWeight.normal)),
       ),
     );
   }
 
-  Widget _choiceButton(String choice, IconData icon) {
+  Widget _choiceButton(ColorScheme cs, String choice, IconData icon) {
     final selected = _choice == choice;
     return GestureDetector(
       onTap: () => setState(() => _choice = choice),
@@ -133,23 +147,32 @@ class _TossScreenState extends State<TossScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? Colors.amber.shade700 : const Color(0xFF0D2B1E),
+          color: selected
+              ? cs.onSurface.withValues(alpha: 0.12)
+              : cs.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? Colors.amber : Colors.white24,
+            color: selected ? cs.onSurface : cs.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: selected ? Colors.white : Colors.white54, size: 20),
+            Icon(icon,
+                color: selected
+                    ? cs.onSurface
+                    : cs.onSurface.withValues(alpha: 0.55),
+                size: 20),
             const SizedBox(width: 8),
             Text(choice[0].toUpperCase() + choice.substring(1),
                 style: TextStyle(
-                    color: selected ? Colors.white : Colors.white60,
+                    color: selected
+                        ? cs.onSurface
+                        : cs.onSurface.withValues(alpha: 0.6),
                     fontSize: 15,
-                    fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
+                    fontWeight:
+                        selected ? FontWeight.bold : FontWeight.normal)),
           ],
         ),
       ),

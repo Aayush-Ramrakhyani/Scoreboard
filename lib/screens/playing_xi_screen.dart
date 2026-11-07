@@ -4,6 +4,8 @@ import '../models.dart';
 import '../tournament_models.dart';
 import 'toss_screen.dart';
 
+/// Lets each team pick their 11 players from a registered squad before a
+/// tournament match. Validates minimum selections then proceeds to [TossScreen].
 class PlayingXIScreen extends StatefulWidget {
   final TournamentTeam team1;
   final TournamentTeam team2;
@@ -222,19 +224,17 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: Text(
           'Playing XI · ${widget.matchLabel}',
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 14),
         ),
         bottom: TabBar(
           controller: _tab,
-          labelColor: Colors.greenAccent,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: Colors.greenAccent,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+          indicatorColor: Theme.of(context).colorScheme.primary,
           tabs: [
             _teamTab(widget.team1.name, _cap1Ok && _wk1Ok),
             _teamTab(widget.team2.name, _cap2Ok && _wk2Ok),
@@ -261,7 +261,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
           Text(name),
           if (done) ...[
             const SizedBox(width: 5),
-            const Icon(Icons.check_circle, size: 13, color: Colors.greenAccent),
+            Icon(Icons.check_circle, size: 13, color: Theme.of(context).colorScheme.primary),
           ],
         ]),
       );
@@ -288,14 +288,14 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
         margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
         padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
-          color: const Color(0xFF0D2B1E),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Center(
           child: Text(team.name,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.bold)),
         ),
       ),
 
@@ -306,8 +306,8 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
           Expanded(
             child: Center(
               child: Text('PLAYING XI (${xi.length}/11)',
-                  style: const TextStyle(
-                      color: Colors.greenAccent,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.8)),
@@ -382,7 +382,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.green.withOpacity(0.25)),
       ),
@@ -392,7 +392,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
           padding: const EdgeInsets.symmetric(vertical: 4),
           itemCount: xi.length,
           separatorBuilder: (_, __) =>
-              const Divider(height: 1, color: Colors.white10),
+              Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
           itemBuilder: (_, pos) {
             final sqIdx = xi[pos];
             final p = team.players[sqIdx];
@@ -434,7 +434,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
                                 style: TextStyle(
                                     color: selected
                                         ? Colors.amber
-                                        : Colors.white38,
+                                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold)),
                           ),
@@ -443,7 +443,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
                                 style: TextStyle(
                                     color: selected
                                         ? Colors.amber
-                                        : Colors.white,
+                                        : Theme.of(context).colorScheme.onSurface,
                                     fontSize: 12,
                                     fontWeight: selected
                                         ? FontWeight.bold
@@ -505,21 +505,21 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
     if (benchList.isEmpty) {
       return Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF0D2B1E),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
-        child: const Center(
+        child: Center(
           child: Text('No bench\nplayers',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white30, fontSize: 12)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 12)),
         ),
       );
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.orange.withOpacity(0.25)),
       ),
@@ -529,7 +529,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
           padding: const EdgeInsets.symmetric(vertical: 4),
           itemCount: benchList.length,
           separatorBuilder: (_, __) =>
-              const Divider(height: 1, color: Colors.white10),
+              Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
           itemBuilder: (_, listPos) {
             final sqIdx = benchList[listPos];
             final p = team.players[sqIdx];
@@ -567,7 +567,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
                                 style: TextStyle(
                                     color: selected
                                         ? Colors.orange
-                                        : Colors.white38,
+                                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold)),
                           ),
@@ -576,7 +576,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
                                 style: TextStyle(
                                     color: selected
                                         ? Colors.orange
-                                        : Colors.white70,
+                                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                     fontSize: 12,
                                     fontWeight: selected
                                         ? FontWeight.bold
@@ -601,9 +601,9 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
                                   color: const Color(0xFF1565C0),
                                   borderRadius: BorderRadius.circular(3),
                                 ),
-                                child: const Text('WK',
+                                child: Text('WK',
                                     style: TextStyle(
-                                        color: Colors.white,
+                                        color: Theme.of(context).colorScheme.onSurface,
                                         fontSize: 8,
                                         fontWeight: FontWeight.bold)),
                               ),
@@ -640,8 +640,8 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
         decoration: BoxDecoration(color: col!, borderRadius: BorderRadius.circular(3)),
         child: Text(lbl,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 8, fontWeight: FontWeight.bold)),
       ),
       const SizedBox(width: 2),
     ];
@@ -651,13 +651,13 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
         duration: const Duration(milliseconds: 130),
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
         decoration: BoxDecoration(
-          color: active ? color : Colors.white10,
+          color: active ? color : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(3),
-          border: Border.all(color: active ? color : Colors.white24, width: 0.8),
+          border: Border.all(color: active ? color : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), width: 0.8),
         ),
         child: Text(label,
             style: TextStyle(
-                color: active ? Colors.white : Colors.white38,
+                color: active ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                 fontSize: 8,
                 fontWeight: FontWeight.bold)),
       );
@@ -674,7 +674,7 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-      color: const Color(0xFF0D2B1E),
+      color: Theme.of(context).colorScheme.surface,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Row(children: [
           _StatusChip(
@@ -691,9 +691,9 @@ class _PlayingXIScreenState extends State<PlayingXIScreen>
           child: ElevatedButton(
             onPressed: _canConfirm ? _confirm : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              disabledBackgroundColor: Colors.white10,
-              foregroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              disabledBackgroundColor: Theme.of(context).colorScheme.outlineVariant,
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
               padding: const EdgeInsets.symmetric(vertical: 16),
               textStyle:
                   const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
@@ -790,8 +790,8 @@ class _FlyTile extends StatelessWidget {
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(name,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 11,
                   fontWeight: FontWeight.bold),
               maxLines: 1,
@@ -822,22 +822,22 @@ class _SwapButton extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: canSwap
-              ? Colors.green.shade700
+              ? Theme.of(context).colorScheme.primary
               : hasAny
                   ? Colors.amber.withOpacity(0.25)
-                  : const Color(0xFF0D2B1E),
+                  : Theme.of(context).colorScheme.surface,
           border: Border.all(
             color: canSwap
-                ? Colors.greenAccent
+                ? Theme.of(context).colorScheme.primary
                 : hasAny
                     ? Colors.amber.withOpacity(0.6)
-                    : Colors.white24,
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
             width: 1.5,
           ),
           boxShadow: canSwap
               ? [
                   BoxShadow(
-                      color: Colors.greenAccent.withOpacity(0.35),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.35),
                       blurRadius: 10,
                       spreadRadius: 2)
                 ]
@@ -850,7 +850,7 @@ class _SwapButton extends StatelessWidget {
               ? Colors.white
               : hasAny
                   ? Colors.amber
-                  : Colors.white24,
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
         ),
       ),
     );
@@ -876,11 +876,11 @@ class _StatusChip extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(done ? Icons.check_circle : Icons.people_outline,
-            color: done ? Colors.greenAccent : Colors.white38, size: 13),
+            color: done ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), size: 13),
         const SizedBox(width: 4),
         Text('$name: $count/11',
             style: TextStyle(
-                color: done ? Colors.greenAccent : Colors.white54,
+                color: done ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                 fontSize: 11,
                 fontWeight: done ? FontWeight.bold : FontWeight.normal)),
       ]),
@@ -899,12 +899,12 @@ class _StatusChip extends StatelessWidget {
         const SizedBox(height: 2),
         Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(capOk ? Icons.star : Icons.star_border,
-              color: capOk ? const Color(0xFFF9A825) : Colors.white38,
+              color: capOk ? Color(0xFFF9A825) : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
               size: 12),
           const SizedBox(width: 3),
           Text(capOk ? 'Captain set' : 'No captain',
               style: TextStyle(
-                  color: capOk ? const Color(0xFFF9A825) : Colors.white38,
+                  color: capOk ? Color(0xFFF9A825) : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                   fontSize: 10)),
         ]),
       ],

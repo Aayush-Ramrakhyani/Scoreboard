@@ -5,6 +5,8 @@ import '../services/template_service.dart';
 import 'squad_entry.dart';
 import 'tournament_home_screen.dart';
 
+/// Setup wizard for a multi-format series (e.g. 2 Tests + 3 ODIs + 3 T20Is).
+/// Optionally pre-fills from a saved [templateName].
 class MultiFormatSeriesSetupScreen extends StatefulWidget {
   final String? templateName;
   const MultiFormatSeriesSetupScreen({super.key, this.templateName});
@@ -132,15 +134,13 @@ class _MultiFormatSeriesSetupScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Multi-Format Series',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Multi-Format Series',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tab,
           labelColor: Colors.deepOrangeAccent,
-          unselectedLabelColor: Colors.white54,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
           indicatorColor: Colors.deepOrangeAccent,
           tabs: [
             const Tab(text: 'Series Info'),
@@ -154,11 +154,11 @@ class _MultiFormatSeriesSetupScreenState
         children: [
           _buildInfo(),
           Column(children: [
-            _teamHeader(_t1Ctrl, Colors.green.shade700, _squad1),
+            _teamHeader(_t1Ctrl, Theme.of(context).colorScheme.primary, _squad1),
             Expanded(
                 child: SquadEntryWidget(
                     players: _squad1,
-                    accentColor: Colors.green.shade700,
+                    accentColor: Theme.of(context).colorScheme.primary,
                     onAddPlayer: _squad1.length < 21
                         ? () => setState(() => _squad1
                             .add(PlayerSetupData('Player ${_squad1.length + 1}')))
@@ -245,8 +245,8 @@ class _MultiFormatSeriesSetupScreenState
           onPressed: _segments.isEmpty ? null : _start,
           style: ElevatedButton.styleFrom(
             backgroundColor: _color,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: Colors.white12,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+            disabledBackgroundColor: Theme.of(context).colorScheme.outlineVariant,
             padding: const EdgeInsets.symmetric(vertical: 18),
             textStyle:
                 const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
@@ -260,8 +260,8 @@ class _MultiFormatSeriesSetupScreenState
   }
 
   Widget _label(String text) => Text(text,
-      style: const TextStyle(
-          color: Colors.white54,
+      style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
           fontSize: 10,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.5));
@@ -290,24 +290,24 @@ class _MultiFormatSeriesSetupScreenState
             decoration: BoxDecoration(
               color: sel
                   ? Colors.deepOrange.shade700.withValues(alpha:0.4)
-                  : const Color(0xFF0D2B1E),
+                  : Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                  color: sel ? Colors.deepOrangeAccent : Colors.white24),
+                  color: sel ? Colors.deepOrangeAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
             ),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(f.$2,
                       style: TextStyle(
-                          color: sel ? Colors.white : Colors.white70,
+                          color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           fontWeight: sel
                               ? FontWeight.bold
                               : FontWeight.normal,
                           fontSize: 13)),
                   Text(f.$3,
-                      style: const TextStyle(
-                          color: Colors.white38, fontSize: 11)),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
                 ]),
           ),
         );
@@ -330,14 +330,14 @@ class _MultiFormatSeriesSetupScreenState
               decoration: BoxDecoration(
                 color: sel
                     ? Colors.deepOrange.shade700
-                    : const Color(0xFF0D2B1E),
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
                 border:
-                    Border.all(color: sel ? Colors.deepOrangeAccent : Colors.white24),
+                    Border.all(color: sel ? Colors.deepOrangeAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
               ),
               child: Text('$d days',
                   style: TextStyle(
-                      color: sel ? Colors.white : Colors.white60,
+                      color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       fontWeight:
                           sel ? FontWeight.bold : FontWeight.normal)),
             ),
@@ -364,14 +364,14 @@ class _MultiFormatSeriesSetupScreenState
             decoration: BoxDecoration(
               color: sel
                   ? Colors.deepOrange.shade700
-                  : const Color(0xFF0D2B1E),
+                  : Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(8),
               border:
-                  Border.all(color: sel ? Colors.deepOrangeAccent : Colors.white24),
+                  Border.all(color: sel ? Colors.deepOrangeAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
             ),
             child: Text('$n',
                 style: TextStyle(
-                    color: sel ? Colors.white : Colors.white60,
+                    color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     fontWeight:
                         sel ? FontWeight.bold : FontWeight.normal,
                     fontSize: 15)),
@@ -410,19 +410,19 @@ class _MultiFormatSeriesSetupScreenState
               color: c.withValues(alpha:0.7),
               borderRadius: BorderRadius.circular(6)),
           child: Text(fmt,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 11,
                   fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(label,
-              style: const TextStyle(color: Colors.white, fontSize: 13)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
         ),
         GestureDetector(
           onTap: () => setState(() => _segments.removeAt(idx)),
-          child: const Icon(Icons.close, color: Colors.white38, size: 18),
+          child: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), size: 18),
         ),
       ]),
     );
@@ -432,10 +432,10 @@ class _MultiFormatSeriesSetupScreenState
     return TextField(
       controller: ctrl,
       onChanged: (_) => setState(() {}),
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white60),
+        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
         prefixIcon: Icon(icon, color: Colors.deepOrangeAccent),
         enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.deepOrange.shade700),
@@ -445,7 +445,7 @@ class _MultiFormatSeriesSetupScreenState
                 const BorderSide(color: Colors.deepOrangeAccent, width: 2),
             borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: const Color(0xFF0D2B1E),
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }
@@ -461,13 +461,13 @@ class _MultiFormatSeriesSetupScreenState
             Expanded(
               child: Text(
                 ctrl.text.isEmpty ? 'Team' : ctrl.text,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
             TextButton.icon(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white70,
+                foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

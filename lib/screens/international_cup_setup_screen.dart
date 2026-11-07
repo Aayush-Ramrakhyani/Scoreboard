@@ -3,6 +3,8 @@ import '../cup_data.dart';
 import '../tournament_models.dart';
 import 'squad_review_screen.dart';
 
+/// Setup wizard for an international cup (e.g. World Cup): selects the cup
+/// type, assigns national teams to groups, then proceeds to [SquadReviewScreen].
 class InternationalCupSetupScreen extends StatefulWidget {
   const InternationalCupSetupScreen({super.key});
 
@@ -40,19 +42,17 @@ class _InternationalCupSetupScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('International Cup',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
+        title: Text('International Cup',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('SELECT CUP',
+          Text('SELECT CUP',
               style: TextStyle(
-                  color: Colors.white38,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5)),
@@ -69,35 +69,35 @@ class _InternationalCupSetupScreenState
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: selected
-                        ? Colors.green.shade900.withValues(alpha: 0.6)
-                        : const Color(0xFF0D2B1E),
+                        ? Theme.of(context).colorScheme.surface
+                        : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: selected ? Colors.greenAccent : Colors.white12,
+                      color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
                       width: selected ? 1.5 : 1,
                     ),
                   ),
                   child: Row(children: [
                     Icon(meta.$4,
-                        color: selected ? Colors.greenAccent : Colors.white38,
+                        color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                         size: 24),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(meta.$2,
                             style: TextStyle(
-                                color: selected ? Colors.white : Colors.white70,
+                                color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14)),
                         const SizedBox(height: 2),
                         Text(meta.$3,
-                            style: const TextStyle(
-                                color: Colors.white38, fontSize: 11)),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
                       ]),
                     ),
                     if (selected)
-                      const Icon(Icons.check_circle,
-                          color: Colors.greenAccent, size: 20),
+                      Icon(Icons.check_circle,
+                          color: Theme.of(context).colorScheme.primary, size: 20),
                   ]),
                 ),
               ),
@@ -109,8 +109,8 @@ class _InternationalCupSetupScreenState
             child: ElevatedButton(
               onPressed: _start,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade700,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 textStyle: const TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold),

@@ -4,6 +4,8 @@ import '../saved_template.dart';
 import '../services/template_service.dart';
 import 'tournament_home_screen.dart';
 
+/// Lists saved match/series templates stored via [TemplateService]. Templates
+/// can be loaded to skip squad re-entry when replaying a familiar fixture.
 class SavedTemplatesScreen extends StatefulWidget {
   const SavedTemplatesScreen({super.key});
   @override
@@ -47,16 +49,15 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
     final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF0D2B1E),
-            title: const Text('Delete Setup',
-                style: TextStyle(color: Colors.white)),
+                title: Text('Delete Setup',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             content: Text('Delete "${t.name}"?\nThis cannot be undone.',
-                style: const TextStyle(color: Colors.white70)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: Colors.white54))),
+                  child: Text('Cancel',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
               TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: const Text('Delete',
@@ -85,17 +86,15 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('My Setups',
+        title: Text('My Setups',
             style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
+                TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.greenAccent))
+          ? Center(
+              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
           : _templates.isEmpty
               ? _empty()
               : ListView.separated(
@@ -109,15 +108,15 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
 
   Widget _empty() => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.bookmark_border, color: Colors.white12, size: 64),
+          Icon(Icons.bookmark_border, color: Theme.of(context).colorScheme.outlineVariant, size: 64),
           const SizedBox(height: 16),
-          const Text('No saved setups yet',
-              style: TextStyle(color: Colors.white38, fontSize: 16)),
+          Text('No saved setups yet',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 16)),
           const SizedBox(height: 6),
-          const Text(
+          Text(
               'Save a series or tournament setup from the setup screens',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white24, fontSize: 13)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontSize: 13)),
         ]),
       );
 
@@ -125,7 +124,7 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
     final color = _typeColor(t.type);
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
@@ -141,8 +140,8 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(t.name,
-                          style: const TextStyle(
-                              color: Colors.white,
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 15,
                               fontWeight: FontWeight.bold)),
                       const SizedBox(height: 3),
@@ -151,13 +150,13 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
                             ? 'Last played: Season ${t.season}'
                             : 'Not played yet',
                         style:
-                            const TextStyle(color: Colors.white38, fontSize: 11),
+                            TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11),
                       ),
                     ]),
               ),
               _badge(t.typeLabel, color),
               const SizedBox(width: 6),
-              if (t.type != 'multiformat') _badge(t.formatLabel, Colors.white24),
+              if (t.type != 'multiformat') _badge(t.formatLabel, Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
             ]),
           ),
           // ── Teams ────────────────────────────────────────────────────────
@@ -171,12 +170,12 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.06),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(tm.name,
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 11)),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 11)),
                       ))
                   .toList(),
             ),
@@ -189,11 +188,11 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
               child: Text(
                 t.segments.map((s) => s.label).join(' + '),
                 style:
-                    const TextStyle(color: Colors.white38, fontSize: 11),
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11),
               ),
             ),
           // ── Actions ──────────────────────────────────────────────────────
-          const Divider(color: Colors.white10, height: 20),
+          Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 20),
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
             child: Row(children: [
@@ -203,12 +202,12 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
                   label: t.season == 0
                       ? 'Start'
                       : 'Start Season ${t.season + 1}',
-                  color: Colors.greenAccent,
+                  color: Theme.of(context).colorScheme.primary,
                   onTap: () => _startSeason(t),
                 ),
               ),
               const SizedBox(width: 6),
-              _iconBtn(Icons.edit_outlined, Colors.white54, () => _edit(t)),
+              _iconBtn(Icons.edit_outlined, Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), () => _edit(t)),
               _iconBtn(Icons.delete_outline, Colors.redAccent.withValues(alpha: 0.7),
                   () => _delete(t)),
             ]),
@@ -268,7 +267,7 @@ class _SavedTemplatesScreenState extends State<SavedTemplatesScreen> {
         'triseries' => Colors.indigo.shade400,
         'tournament' => Colors.amber.shade600,
         'multiformat' => Colors.deepOrange,
-        _ => Colors.white54,
+        _ => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
       };
 }
 
@@ -372,30 +371,29 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
     final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF0D2B1E),
-            title: const Text('Add Team',
-                style: TextStyle(color: Colors.white)),
+                title: Text('Add Team',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             content: TextField(
               controller: ctrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              decoration: InputDecoration(
                 labelText: 'Team name',
-                labelStyle: TextStyle(color: Colors.white54),
+                labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
                 enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white24)),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24))),
                 focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.greenAccent)),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
               ),
             ),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: Colors.white54))),
+                  child: Text('Cancel',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
               TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Add',
-                      style: TextStyle(color: Colors.greenAccent))),
+                  child: Text('Add',
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary))),
             ],
           ),
         ) ??
@@ -427,29 +425,27 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
   Widget build(BuildContext context) {
     final t = widget.template;
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Edit Setup',
+        title: Text('Edit Setup',
             style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
+                TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         actions: [
           if (_saving)
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(16),
               child: SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
-                      color: Colors.greenAccent, strokeWidth: 2)),
+                      color: Theme.of(context).colorScheme.primary, strokeWidth: 2)),
             )
           else
             TextButton(
               onPressed: _save,
-              child: const Text('Save',
+              child: Text('Save',
                   style: TextStyle(
-                      color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+                      color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
             ),
         ],
       ),
@@ -472,10 +468,10 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
                   label: Text('$n Matches'),
                   selected: sel,
                   onSelected: (_) => setState(() => _numMatches = n),
-                  selectedColor: Colors.greenAccent.withValues(alpha: 0.2),
-                  backgroundColor: Colors.white.withValues(alpha: 0.05),
+                  selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                   labelStyle: TextStyle(
-                      color: sel ? Colors.greenAccent : Colors.white54),
+                      color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
                 );
               }).toList(),
             ),
@@ -488,10 +484,10 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
             if (t.type == 'triseries' || t.type == 'tournament')
               TextButton.icon(
                 onPressed: _addTeam,
-                icon: const Icon(Icons.add,
-                    color: Colors.greenAccent, size: 16),
-                label: const Text('Add',
-                    style: TextStyle(color: Colors.greenAccent, fontSize: 12)),
+                icon: Icon(Icons.add,
+                    color: Theme.of(context).colorScheme.primary, size: 16),
+                label: Text('Add',
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12)),
               ),
           ]),
           ...List.generate(_teams.length, (i) => _teamTile(i)),
@@ -504,8 +500,8 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
   Widget _section(String label) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Text(label.toUpperCase(),
-            style: const TextStyle(
-                color: Colors.greenAccent,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.3)),
@@ -514,13 +510,13 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
   Widget _field(TextEditingController ctrl, String hint, IconData icon) =>
       TextField(
         controller: ctrl,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white24),
-          prefixIcon: Icon(icon, color: Colors.white38, size: 18),
+          hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
+          prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), size: 18),
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.05),
+          fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
@@ -538,9 +534,9 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,21 +544,21 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 6, 4),
             child: Row(children: [
-              const Icon(Icons.groups, color: Colors.white38, size: 16),
+              Icon(Icons.groups, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), size: 16),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
                   controller: et.nameCtrl,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 14,
                       fontWeight: FontWeight.w500),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                     hintText: 'Team name',
-                    hintStyle: TextStyle(color: Colors.white24),
+                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                   ),
                 ),
               ),
@@ -580,16 +576,16 @@ class _TemplateEditScreenState extends State<_TemplateEditScreen> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             child: Row(children: [
               Text('${et.players.length} players',
-                  style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: () => _editSquad(idx),
-                child: const Text('Edit Squad',
+                child: Text('Edit Squad',
                     style: TextStyle(
-                        color: Colors.greenAccent,
+                        color: Theme.of(context).colorScheme.primary,
                         fontSize: 11,
                         decoration: TextDecoration.underline,
-                        decorationColor: Colors.greenAccent)),
+                        decorationColor: Theme.of(context).colorScheme.primary)),
               ),
             ]),
           ),
@@ -690,26 +686,24 @@ class _SquadEditScreenState extends State<_SquadEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: Text(widget.teamName,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, _buildResult()),
-            child: const Text('Done',
+            child: Text('Done',
                 style: TextStyle(
-                    color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+                    color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
       floatingActionButton: _players.length < _maxPlayers
           ? FloatingActionButton.small(
               onPressed: _addPlayer,
-              backgroundColor: Colors.green.shade700,
-              child: const Icon(Icons.add, color: Colors.white),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Icon(Icons.add, color: Theme.of(context).colorScheme.onSurface),
             )
           : null,
       body: ReorderableListView.builder(
@@ -736,23 +730,23 @@ class _SquadEditScreenState extends State<_SquadEditScreen> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            const Icon(Icons.drag_handle, color: Colors.white24, size: 18),
+            Icon(Icons.drag_handle, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
                 controller: p.nameCtrl,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Player ${idx + 1}',
-                  hintStyle: const TextStyle(color: Colors.white24),
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
@@ -762,8 +756,8 @@ class _SquadEditScreenState extends State<_SquadEditScreen> {
             if (_players.length > _minPlayers)
               GestureDetector(
                 onTap: () => _removePlayer(idx),
-                child: const Icon(Icons.close,
-                    color: Colors.white24, size: 16),
+                child: Icon(Icons.close,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), size: 16),
               ),
           ]),
           const SizedBox(height: 6),
@@ -806,17 +800,17 @@ class _SquadEditScreenState extends State<_SquadEditScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
           color: sel
-              ? Colors.greenAccent.withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.05),
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
               color: sel
-                  ? Colors.greenAccent.withValues(alpha: 0.5)
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
                   : Colors.transparent),
         ),
         child: Text(label,
             style: TextStyle(
-                color: sel ? Colors.greenAccent : Colors.white38,
+                color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                 fontSize: 11)),
       ),
     );
@@ -840,7 +834,7 @@ class _SquadEditScreenState extends State<_SquadEditScreen> {
         ),
         child: Text(label,
             style: TextStyle(
-                color: sel ? Colors.deepOrange.shade200 : Colors.white38,
+                color: sel ? Colors.deepOrange.shade200 : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                 fontSize: 10)),
       ),
     );
@@ -863,7 +857,7 @@ class _SquadEditScreenState extends State<_SquadEditScreen> {
           ),
           child: Text(label,
               style: TextStyle(
-                  color: active ? Colors.amber : Colors.white38,
+                  color: active ? Colors.amber : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                   fontSize: 11)),
         ),
       );

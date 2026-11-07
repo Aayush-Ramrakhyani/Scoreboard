@@ -6,6 +6,8 @@ import '../services/template_service.dart';
 import 'squad_entry.dart';
 import 'tournament_home_screen.dart';
 
+/// Setup wizard for a bilateral series (e.g. 3-match T20I series between two
+/// teams). Optionally pre-fills from a saved [templateName].
 class SeriesSetupScreen extends StatefulWidget {
   final String? templateName;
   const SeriesSetupScreen({super.key, this.templateName});
@@ -117,7 +119,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
         future: _loadSavedSeries(),
         builder: (ctx, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.greenAccent));
+            return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
           }
           final state = snap.data;
           if (state == null) {
@@ -144,9 +146,9 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.sports_cricket_outlined, color: Colors.white12, size: 64),
+            Icon(Icons.sports_cricket_outlined, color: Theme.of(context).colorScheme.outlineVariant, size: 64),
             const SizedBox(height: 16),
-            Text(msg, style: const TextStyle(color: Colors.white38, fontSize: 16), textAlign: TextAlign.center),
+            Text(msg, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 16), textAlign: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: onTap,
@@ -154,7 +156,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
               label: Text(btnLabel),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal.shade700,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -178,7 +180,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D2B1E),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.tealAccent.withValues(alpha: 0.4)),
             ),
@@ -198,9 +200,9 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
                 const Text('In Progress', style: TextStyle(color: Colors.amber, fontSize: 11)),
               ]),
               const SizedBox(height: 12),
-              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 6),
-              Text(subtitle, style: const TextStyle(color: Colors.white60, fontSize: 13)),
+              Text(subtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -210,7 +212,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
                   label: const Text('Resume', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal.shade700,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onSurface,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -223,7 +225,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
             onPressed: onNew,
             icon: const Icon(Icons.add_circle_outline, size: 16),
             label: const Text('Start a new series instead'),
-            style: TextButton.styleFrom(foregroundColor: Colors.white38),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)),
           ),
         ]),
       );
@@ -231,16 +233,14 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Series Setup',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Series Setup',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tab,
-          labelColor: Colors.greenAccent,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: Colors.greenAccent,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+          indicatorColor: Theme.of(context).colorScheme.primary,
           tabs: [
             const Tab(text: 'Continue'),
             const Tab(text: 'Series Info'),
@@ -255,11 +255,11 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
           _buildContinueTab(),
           _buildInfo(),
           Column(children: [
-            _teamHeader(_t1Ctrl, Colors.green.shade700, _squad1),
+            _teamHeader(_t1Ctrl, Theme.of(context).colorScheme.primary, _squad1),
             Expanded(
                 child: SquadEntryWidget(
                     players: _squad1,
-                    accentColor: Colors.green.shade700,
+                    accentColor: Theme.of(context).colorScheme.primary,
                     onAddPlayer: _squad1.length < 21
                         ? () => setState(() => _squad1
                             .add(PlayerSetupData('Player ${_squad1.length + 1}')))
@@ -304,8 +304,8 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
         const SizedBox(height: 14),
         _formatPicker(),
         const SizedBox(height: 24),
-        const Text('Number of Matches',
-            style: TextStyle(color: Colors.white70, fontSize: 14)),
+        Text('Number of Matches',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 14)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 10,
@@ -317,14 +317,14 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
-                  color: sel ? Colors.teal.shade700 : const Color(0xFF0D2B1E),
+                  color: sel ? Colors.teal.shade700 : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: sel ? Colors.tealAccent : Colors.white24),
+                      color: sel ? Colors.tealAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                 ),
                 child: Text('$n ${n == 1 ? "Match" : "Matches"}',
                     style: TextStyle(
-                        color: sel ? Colors.white : Colors.white60,
+                        color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
               ),
             );
@@ -333,14 +333,14 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
         const SizedBox(height: 8),
         Text(
           'All $_matchCount matches will be played. Winner = most wins.',
-          style: const TextStyle(color: Colors.white38, fontSize: 12),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 12),
         ),
         const SizedBox(height: 32),
         ElevatedButton(
           onPressed: _start,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.teal.shade700,
-            foregroundColor: Colors.white,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             padding: const EdgeInsets.symmetric(vertical: 18),
             textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -361,8 +361,8 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('MATCH FORMAT',
-            style: TextStyle(color: Colors.white54, fontSize: 10,
+        Text('MATCH FORMAT',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 10,
                 fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         const SizedBox(height: 10),
         Wrap(
@@ -375,16 +375,16 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: sel ? Colors.teal.shade700.withValues(alpha:0.45) : const Color(0xFF0D2B1E),
+                  color: sel ? Colors.teal.shade700.withValues(alpha:0.45) : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: sel ? Colors.tealAccent : Colors.white24),
+                  border: Border.all(color: sel ? Colors.tealAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(f.$2, style: TextStyle(
-                      color: sel ? Colors.white : Colors.white70,
+                      color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       fontWeight: sel ? FontWeight.bold : FontWeight.normal,
                       fontSize: 13)),
-                  Text(f.$3, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                  Text(f.$3, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
                 ]),
               ),
             );
@@ -392,8 +392,8 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
         ),
         if (_format == MatchFormat.test) ...[
           const SizedBox(height: 14),
-          const Text('NUMBER OF DAYS',
-              style: TextStyle(color: Colors.white54, fontSize: 10,
+          Text('NUMBER OF DAYS',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 10,
                   fontWeight: FontWeight.bold, letterSpacing: 1.5)),
           const SizedBox(height: 8),
           Row(children: [3, 4, 5].map((d) {
@@ -406,13 +406,13 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
                   duration: const Duration(milliseconds: 150),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: sel ? Colors.teal.shade700 : const Color(0xFF0D2B1E),
+                    color: sel ? Colors.teal.shade700 : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: sel ? Colors.tealAccent : Colors.white24),
+                    border: Border.all(color: sel ? Colors.tealAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                   ),
                   child: Text('$d days',
                       style: TextStyle(
-                          color: sel ? Colors.white : Colors.white60,
+                          color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
                 ),
               ),
@@ -429,10 +429,10 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
       controller: ctrl,
       onChanged: (_) => setState(() {}),
       keyboardType: numeric ? TextInputType.number : TextInputType.text,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white60),
+        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
         prefixIcon: Icon(icon, color: Colors.tealAccent),
         enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.teal.shade700),
@@ -441,7 +441,7 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
             borderSide: const BorderSide(color: Colors.tealAccent, width: 2),
             borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: const Color(0xFF0D2B1E),
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }
@@ -457,13 +457,13 @@ class _SeriesSetupScreenState extends State<SeriesSetupScreen>
             Expanded(
               child: Text(
                 ctrl.text.isEmpty ? 'Team' : ctrl.text,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
             TextButton.icon(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white70,
+                foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

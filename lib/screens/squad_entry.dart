@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models.dart';
 import '../services/firebase_service.dart';
 
+/// Mutable per-player state used while building a squad before it is committed.
 class PlayerSetupData {
   final TextEditingController nameCtrl;
   PlayerRole? role;
@@ -100,10 +101,10 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
             margin: const EdgeInsets.only(bottom: 10),
             child: OutlinedButton.icon(
               onPressed: widget.onAddPlayer,
-              icon: const Icon(Icons.person_add,
-                  color: Colors.greenAccent, size: 18),
-              label: const Text('Add Player',
-                  style: TextStyle(color: Colors.greenAccent)),
+              icon: Icon(Icons.person_add,
+                  color: Theme.of(context).colorScheme.primary, size: 18),
+              label: Text('Add Player',
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary)),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.green),
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -122,9 +123,9 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: const Color(0xFF0D2B1E),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white12),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -135,30 +136,30 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
                   radius: 14,
                   backgroundColor: widget.accentColor,
                   child: Text('${i + 1}',
-                      style: const TextStyle(fontSize: 11, color: Colors.white)),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
                     controller: p.nameCtrl,
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                     decoration: InputDecoration(
                       isDense: true,
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       hintText: 'Player name',
-                      hintStyle: const TextStyle(color: Colors.white30),
+                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.green.shade800),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.surface),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            color: Colors.greenAccent, width: 1.5),
+                        borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary, width: 1.5),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
-                      fillColor: const Color(0xFF1B3A2D),
+                      fillColor: Theme.of(context).scaffoldBackgroundColor,
                     ),
                   ),
                 ),
@@ -214,8 +215,8 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
               if (p.needsBowlerType) ...[
                 const SizedBox(height: 8),
                 Row(children: [
-                  const Text('Type:',
-                      style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text('Type:',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
                   const SizedBox(width: 8),
                   _typeChip(p, BowlerType.fast, 'Fast'),
                   const SizedBox(width: 6),
@@ -223,7 +224,7 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
                 ]),
               ],
               const SizedBox(height: 10),
-              const Divider(color: Colors.white12, height: 1),
+              Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
               const SizedBox(height: 10),
               _sectionLabel('DESIGNATION'),
               const SizedBox(height: 6),
@@ -264,8 +265,8 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
   }
 
   Widget _sectionLabel(String text) => Text(text,
-      style: const TextStyle(
-          color: Colors.white38,
+      style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
           fontSize: 10,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.5));
@@ -284,18 +285,18 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? color : Colors.white10,
+          color: selected ? color : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: selected ? color : dim ? Colors.white10 : Colors.white24),
+              color: selected ? color : dim ? Theme.of(context).colorScheme.outlineVariant : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
         ),
         child: Text(label,
             style: TextStyle(
                 color: selected
                     ? Colors.white
                     : dim
-                        ? Colors.white24
-                        : Colors.white60,
+                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
       ),
@@ -311,13 +312,13 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          color: sel ? color : Colors.white10,
+          color: sel ? color : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: sel ? color : Colors.white24),
+          border: Border.all(color: sel ? color : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
         ),
         child: Text(label,
             style: TextStyle(
-                color: sel ? Colors.white : Colors.white60,
+                color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 fontSize: 12,
                 fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
       ),
@@ -338,14 +339,14 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? color.withValues(alpha: 0.85) : Colors.white10,
+          color: active ? color.withValues(alpha: 0.85) : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: active
                   ? color
                   : disabled
-                      ? Colors.white10
-                      : Colors.white24),
+                      ? Theme.of(context).colorScheme.outlineVariant
+                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(active ? Icons.check_circle : icon,
@@ -353,16 +354,16 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
               color: active
                   ? Colors.white
                   : disabled
-                      ? Colors.white24
-                      : Colors.white54),
+                      ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)
+                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
           const SizedBox(width: 5),
           Text(label,
               style: TextStyle(
                   color: active
                       ? Colors.white
                       : disabled
-                          ? Colors.white24
-                          : Colors.white60,
+                          ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)
+                          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   fontSize: 12,
                   fontWeight: active ? FontWeight.bold : FontWeight.normal)),
         ]),
@@ -375,8 +376,8 @@ class _SquadEntryWidgetState extends State<SquadEntryWidget> {
         decoration:
             BoxDecoration(color: color, borderRadius: BorderRadius.circular(5)),
         child: Text(label,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 9, fontWeight: FontWeight.bold)),
       );
 
   List<({String label, Color color})> _buildBadges(PlayerSetupData p) {
@@ -412,7 +413,7 @@ Future<SavedTeam?> showTeamPickerSheet(BuildContext context) =>
     showModalBottomSheet<SavedTeam>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF0D2B1E),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => const _TeamPickerSheet(),
@@ -475,47 +476,47 @@ class _TeamPickerSheetState extends State<_TeamPickerSheet> {
           margin: const EdgeInsets.only(top: 10, bottom: 4),
           width: 36, height: 4,
           decoration: BoxDecoration(
-              color: Colors.white24,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
               borderRadius: BorderRadius.circular(2)),
         ),
         // Title row
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
           child: Row(children: [
-            const Expanded(
+            Expanded(
               child: Text('Load from My Teams',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.bold)),
             ),
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.white38),
+              icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)),
               onPressed: () => Navigator.pop(context),
             ),
           ]),
         ),
-        const Divider(height: 1, color: Colors.white10),
+        Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
         // Content
         Expanded(
           child: _loading
-              ? const Center(
+              ? Center(
                   child: CircularProgressIndicator(
-                      color: Colors.greenAccent))
+                      color: Theme.of(context).colorScheme.primary))
               : (_teams == null || _teams!.isEmpty)
-                  ? const Center(
+                  ? Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.group_add,
-                              color: Colors.white12, size: 44),
+                              color: Theme.of(context).colorScheme.outlineVariant, size: 44),
                           SizedBox(height: 12),
                           Text('No saved teams yet',
-                              style: TextStyle(color: Colors.white54)),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
                           SizedBox(height: 4),
                           Text('Go to My Teams to create one',
                               style: TextStyle(
-                                  color: Colors.white30, fontSize: 12)),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 12)),
                         ],
                       ),
                     )
@@ -532,13 +533,13 @@ class _TeamPickerSheetState extends State<_TeamPickerSheet> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1B3A2D),
+                              color: Theme.of(context).scaffoldBackgroundColor,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.white12),
+                              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                             ),
                             child: Row(children: [
-                              const Icon(Icons.groups,
-                                  color: Colors.greenAccent, size: 20),
+                              Icon(Icons.groups,
+                                  color: Theme.of(context).colorScheme.primary, size: 20),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -546,18 +547,18 @@ class _TeamPickerSheetState extends State<_TeamPickerSheet> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(t.name,
-                                          style: const TextStyle(
-                                              color: Colors.white,
+                                          style: TextStyle(
+                                              color: Theme.of(context).colorScheme.onSurface,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 14)),
                                       Text('${t.players.length} players',
-                                          style: const TextStyle(
-                                              color: Colors.white38,
+                                          style: TextStyle(
+                                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                                               fontSize: 11)),
                                     ]),
                               ),
-                              const Icon(Icons.chevron_right,
-                                  color: Colors.white38),
+                              Icon(Icons.chevron_right,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)),
                             ]),
                           ),
                         );

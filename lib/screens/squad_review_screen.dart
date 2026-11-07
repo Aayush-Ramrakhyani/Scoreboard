@@ -4,6 +4,8 @@ import '../models.dart';
 import '../tournament_models.dart';
 import 'tournament_home_screen.dart';
 
+/// Shows all squads assigned to groups before an international cup starts.
+/// Allows last-minute roster edits then proceeds to [TournamentHomeScreen].
 class SquadReviewScreen extends StatefulWidget {
   final CupType cupType;
   final List<List<String>> groupAssignments;
@@ -68,20 +70,18 @@ class _SquadReviewScreenState extends State<SquadReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('Review Squads',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
+        title: Text('Review Squads',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
             child: ElevatedButton(
               onPressed: _startTournament,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade700,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
                 textStyle: const TextStyle(fontWeight: FontWeight.bold),
               ),
               child: const Text('Start Tournament'),
@@ -92,9 +92,9 @@ class _SquadReviewScreenState extends State<SquadReviewScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
+          Text(
             'Tap any team to swap players from their pool before the tournament starts.',
-            style: TextStyle(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12),
           ),
           const SizedBox(height: 16),
           for (int gi = 0; gi < widget.groupAssignments.length; gi++) ...[
@@ -102,8 +102,8 @@ class _SquadReviewScreenState extends State<SquadReviewScreen> {
               padding: const EdgeInsets.only(bottom: 8, top: 4),
               child: Text(
                 'GROUP ${String.fromCharCode(65 + gi)}',
-                style: const TextStyle(
-                  color: Colors.greenAccent,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
@@ -148,39 +148,39 @@ class _TeamTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF0D2B1E),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(teamName,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                       fontSize: 14)),
               const SizedBox(height: 3),
               Text('C: ${captain.name}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11)),
               const SizedBox(height: 2),
               Text(
                 '${squad.length} players · $batters bat · $allRounders AR · $bowlers bowl',
-                style: const TextStyle(color: Colors.white38, fontSize: 10),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10),
               ),
             ]),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: Colors.green.shade900.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.3)),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.edit_outlined, color: Colors.greenAccent, size: 13),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.edit_outlined, color: Theme.of(context).colorScheme.primary, size: 13),
               SizedBox(width: 4),
-              Text('Edit', style: TextStyle(color: Colors.greenAccent, fontSize: 11)),
+              Text('Edit', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 11)),
             ]),
           ),
         ]),
@@ -239,20 +239,18 @@ class _TeamSquadEditorState extends State<_TeamSquadEditor> {
   Widget build(BuildContext context) {
     final bench = _bench;
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         title: Text(widget.teamName,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context, _selected),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade700,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
               ),
               child: const Text('Done'),
             ),
@@ -291,10 +289,10 @@ class _TeamSquadEditorState extends State<_TeamSquadEditor> {
               _sectionLabel('BENCH  (${bench.length})  — tap to bring in'),
               const SizedBox(height: 8),
               if (bench.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Text('No bench players available',
-                      style: TextStyle(color: Colors.white38, fontSize: 13)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 13)),
                 )
               else
                 ...bench.map((p) => _playerTile(
@@ -311,8 +309,8 @@ class _TeamSquadEditorState extends State<_TeamSquadEditor> {
   }
 
   Widget _sectionLabel(String text) => Text(text,
-      style: const TextStyle(
-          color: Colors.greenAccent,
+      style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
           fontSize: 11,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.4));
@@ -323,8 +321,8 @@ class _TeamSquadEditorState extends State<_TeamSquadEditor> {
     final borderColor = isPending
         ? Colors.amber
         : inSquad
-            ? Colors.green.shade800
-            : Colors.white12;
+            ? Theme.of(context).colorScheme.surface
+            : Theme.of(context).colorScheme.outlineVariant;
 
     return GestureDetector(
       onTap: isLocked ? null : onTap,
@@ -336,7 +334,7 @@ class _TeamSquadEditorState extends State<_TeamSquadEditor> {
               ? Colors.amber.withValues(alpha: 0.10)
               : inSquad
                   ? Colors.green.withValues(alpha: 0.06)
-                  : const Color(0xFF0D2B1E),
+                  : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: borderColor, width: isPending ? 1.5 : 1),
         ),
@@ -346,7 +344,7 @@ class _TeamSquadEditorState extends State<_TeamSquadEditor> {
               Expanded(
                 child: Text(p.name,
                     style: TextStyle(
-                        color: inSquad ? Colors.white : Colors.white54,
+                        color: inSquad ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                         fontWeight: FontWeight.w500,
                         fontSize: 13)),
               ),
@@ -368,8 +366,8 @@ class _TeamSquadEditorState extends State<_TeamSquadEditor> {
                 : inSquad
                     ? (_pendingSwap != null
                         ? Colors.amber
-                        : Colors.white24)
-                    : Colors.greenAccent.withValues(alpha: 0.7),
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24))
+                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
             size: 18,
           ),
         ]),
@@ -385,8 +383,8 @@ class _TeamSquadEditorState extends State<_TeamSquadEditor> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(text,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 9, fontWeight: FontWeight.bold)),
       );
 
   String _roleShort(PlayerInfo p) {

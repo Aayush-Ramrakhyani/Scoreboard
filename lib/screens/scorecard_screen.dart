@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models.dart';
 import 'setup_screen.dart';
 
+/// Read-only scorecard view with tabs for each innings. Shows batting,
+/// bowling, and fall-of-wicket tables. [onBackToTournament] is provided
+/// when launched from a tournament context so the back button returns correctly.
 class ScorecardScreen extends StatefulWidget {
   final MatchState state;
   final VoidCallback? onBackToTournament;
@@ -50,11 +53,9 @@ class _ScorecardScreenState extends State<ScorecardScreen>
     final ordinals = ['1st', '2nd', '3rd', '4th'];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Scorecard',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Scorecard',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         actions: [
           if (ms.matchOver)
             TextButton.icon(
@@ -72,19 +73,19 @@ class _ScorecardScreenState extends State<ScorecardScreen>
               },
               icon: Icon(
                 widget.onBackToTournament != null ? Icons.arrow_back : Icons.refresh,
-                color: Colors.greenAccent,
+                color: Theme.of(context).colorScheme.primary,
               ),
               label: Text(
                 widget.onBackToTournament != null ? 'Back to Tournament' : 'New Match',
-                style: const TextStyle(color: Colors.greenAccent),
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
               ),
             ),
         ],
         bottom: TabBar(
           controller: _tab,
-          labelColor: Colors.greenAccent,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: Colors.greenAccent,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+          indicatorColor: Theme.of(context).colorScheme.primary,
           isScrollable: innings.length > 2,
           tabs: innings.map((e) {
             final n = e.$2;
@@ -125,7 +126,7 @@ class _ScorecardScreenState extends State<ScorecardScreen>
   }
 }
 
-class _InningsCard extends StatelessWidget {
+class _InningsCard extends StatefulWidget {
   final Innings innings;
   final int inningsNum;
   final MatchState ms;
@@ -135,6 +136,15 @@ class _InningsCard extends StatelessWidget {
     required this.inningsNum,
     required this.ms,
   });
+
+  @override
+  State<_InningsCard> createState() => _InningsCardState();
+}
+
+class _InningsCardState extends State<_InningsCard> {
+  Innings get innings => widget.innings;
+  int get inningsNum => widget.inningsNum;
+  MatchState get ms => widget.ms;
 
   String get _battingTeam => inningsNum.isOdd
       ? (ms.team1BatsFirst ? ms.setup.team1Name : ms.setup.team2Name)
@@ -201,26 +211,26 @@ class _InningsCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [const Color(0xFF0D2B1E), Colors.green.shade900],
+          colors: [Theme.of(context).colorScheme.surface, Theme.of(context).colorScheme.surface],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(_battingTeam, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+            Text(_battingTeam, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13)),
             Text('${innings.totalRuns}/${innings.wickets}',
-                style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
-            Text(oversLine, style: const TextStyle(color: Colors.white60, fontSize: 13)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 36, fontWeight: FontWeight.bold)),
+            Text(oversLine, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
           ]),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text('Extras: ${innings.totalExtras}',
-                style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13)),
             Text('W:${innings.wides}  NB:${innings.noBalls}  B:${innings.byes}  LB:${innings.legByes}',
-                style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
           ]),
         ],
       ),
@@ -228,8 +238,8 @@ class _InningsCard extends StatelessWidget {
   }
 
   Widget _sectionLabel(String text) => Text(text,
-      style: const TextStyle(
-          color: Colors.greenAccent, fontSize: 11,
+      style: TextStyle(
+          color: Theme.of(context).colorScheme.primary, fontSize: 11,
           fontWeight: FontWeight.bold, letterSpacing: 1.5));
 
   Widget _battingTable() {
@@ -311,21 +321,21 @@ class _InningsCard extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Table(
         columnWidths: widths,
         children: [
           TableRow(
-            decoration: BoxDecoration(color: Colors.green.shade900.withOpacity(0.6)),
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface.withOpacity(0.6)),
             children: header
                 .map((h) => Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       child: Text(h,
-                          style: const TextStyle(
-                              color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11, fontWeight: FontWeight.bold)),
                     ))
                 .toList(),
           ),
@@ -345,7 +355,7 @@ class _InningsCard extends StatelessWidget {
         child: Text(text,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-                color: muted ? Colors.white54 : Colors.white,
+                color: muted ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54) : Theme.of(context).colorScheme.onSurface,
                 fontSize: small ? 11 : 12,
                 fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
       );
@@ -361,7 +371,7 @@ class _InningsCard extends StatelessWidget {
           Text(p.name,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  color: bold ? Colors.greenAccent : Colors.white,
+                  color: bold ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                   fontSize: 12,
                   fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
           if (playerBadges.isNotEmpty) ...[
@@ -376,8 +386,8 @@ class _InningsCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(3),
                         ),
                         child: Text(b.label,
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface, fontSize: 9, fontWeight: FontWeight.bold)),
                       ))
                   .toList(),
             ),
@@ -391,9 +401,9 @@ class _InningsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -402,7 +412,7 @@ class _InningsCard extends StatelessWidget {
           _extraChip('No Balls', innings.noBalls, Colors.amber),
           _extraChip('Byes', innings.byes, Colors.teal),
           _extraChip('Leg Byes', innings.legByes, Colors.cyan),
-          _extraChip('Total', innings.totalExtras, Colors.greenAccent),
+          _extraChip('Total', innings.totalExtras, Theme.of(context).colorScheme.primary),
         ],
       ),
     );
@@ -414,9 +424,9 @@ class _InningsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Wrap(
         spacing: 10, runSpacing: 10,
@@ -441,13 +451,13 @@ class _InningsCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('${fow.wicketNumber}-${fow.score}',
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 2),
                 Text(fow.batsmanName,
-                    style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 11)),
                 Text(overLabel,
-                    style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10)),
               ],
             ),
           );
@@ -459,9 +469,9 @@ class _InningsCard extends StatelessWidget {
   Widget _partnershipTable() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         children: innings.partnerships.asMap().entries.map((e) {
@@ -471,7 +481,7 @@ class _InningsCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
               border: idx > 0
-                  ? const Border(top: BorderSide(color: Colors.white10))
+                  ? Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant))
                   : null,
             ),
             child: Row(children: [
@@ -486,8 +496,8 @@ class _InningsCard extends StatelessWidget {
                 child: Text(
                   '${p.totalRuns}(${p.totalBalls})',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                       fontSize: 13),
                 ),
@@ -507,7 +517,7 @@ class _InningsCard extends StatelessWidget {
   }
 
   Widget _extraChip(String label, int val, Color color) => Column(children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+        Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11)),
         const SizedBox(height: 2),
         Text('$val', style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold)),
       ]);

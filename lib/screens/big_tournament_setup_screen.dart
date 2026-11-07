@@ -12,6 +12,8 @@ class _Preset {
   const _Preset(this.numGroups, this.advanceCount, this.description);
 }
 
+// Enumerates valid group/advance combinations that produce 2, 4, or 8 knockout
+// qualifiers — the only bracket sizes the app supports.
 List<_Preset> _presetsFor(int teams) {
   final result = <_Preset>[];
   for (int g = 1; g <= teams ~/ 2; g++) {
@@ -34,6 +36,9 @@ List<_Preset> _presetsFor(int teams) {
   return result;
 }
 
+/// Multi-step setup wizard for a large custom tournament (4–16+ teams).
+/// Dynamically generates group/knockout presets based on the team count and
+/// optionally pre-fills from a saved [templateName].
 class BigTournamentSetupScreen extends StatefulWidget {
   final String? templateName;
   const BigTournamentSetupScreen({super.key, this.templateName});
@@ -226,17 +231,15 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Big Tournament Setup',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Big Tournament Setup',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(
             value: _totalSteps > 1 ? _step / (_totalSteps - 1) : 0,
-            backgroundColor: Colors.white10,
-            valueColor: const AlwaysStoppedAnimation(Colors.greenAccent),
+            backgroundColor: Theme.of(context).colorScheme.outlineVariant,
+            valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
           ),
         ),
       ),
@@ -272,7 +275,7 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
                 _numTeams = n;
                 _rebuildTeams(n);
               }),
-              child: _chip('$n', sel, Colors.green.shade700),
+              child: _chip('$n', sel, Theme.of(context).colorScheme.primary),
             );
           }).toList(),
         ),
@@ -280,8 +283,8 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
         _label('TOURNAMENT FORMAT'),
         const SizedBox(height: 10),
         if (presets.isEmpty)
-          const Text('No valid formats for this team count.',
-              style: TextStyle(color: Colors.white54))
+          Text('No valid formats for this team count.',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))
         else
           ...presets.map((p) {
             final sel = _preset == p;
@@ -294,21 +297,21 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
                 decoration: BoxDecoration(
                   color: sel
                       ? Colors.amber.shade800.withValues(alpha:0.25)
-                      : const Color(0xFF0D2B1E),
+                      : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: sel ? Colors.amber : Colors.white24),
+                      color: sel ? Colors.amber : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                 ),
                 child: Row(children: [
                   Icon(
                       sel ? Icons.radio_button_checked : Icons.radio_button_off,
-                      color: sel ? Colors.amber : Colors.white38,
+                      color: sel ? Colors.amber : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                       size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(p.description,
                         style: TextStyle(
-                            color: sel ? Colors.white : Colors.white70,
+                            color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             fontSize: 13,
                             fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
                   ),
@@ -334,16 +337,16 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: sel ? Colors.amber.shade800.withValues(alpha:0.35) : const Color(0xFF0D2B1E),
+                  color: sel ? Colors.amber.shade800.withValues(alpha:0.35) : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: sel ? Colors.amber : Colors.white24),
+                  border: Border.all(color: sel ? Colors.amber : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                 ),
                 child: Column(children: [
                   Text(f.$2, style: TextStyle(
-                      color: sel ? Colors.white : Colors.white70,
+                      color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       fontWeight: sel ? FontWeight.bold : FontWeight.normal,
                       fontSize: 13)),
-                  Text(f.$3, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                  Text(f.$3, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10)),
                 ]),
               ),
             );
@@ -366,17 +369,17 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
               padding: const EdgeInsets.only(bottom: 12),
               child: TextField(
                 controller: _nameCtrl[i],
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 decoration: InputDecoration(
                   prefixIcon: CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.amber.shade800,
                     child: Text('${i + 1}',
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 11)),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface, fontSize: 11)),
                   ),
                   hintText: 'Team ${i + 1}',
-                  hintStyle: const TextStyle(color: Colors.white30),
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
                   enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.amber.shade800),
                       borderRadius: BorderRadius.circular(10)),
@@ -385,7 +388,7 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
                           const BorderSide(color: Colors.amber, width: 2),
                       borderRadius: BorderRadius.circular(10)),
                   filled: true,
-                  fillColor: const Color(0xFF0D2B1E),
+                  fillColor: Theme.of(context).colorScheme.surface,
                 ),
               ),
             )),
@@ -405,13 +408,13 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
           Expanded(
             child: Text(
               '${_nameCtrl[teamIdx].text} — Squad Entry  (${teamIdx + 1}/$_numTeams)',
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15),
             ),
           ),
           TextButton.icon(
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white70,
+              foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
@@ -451,9 +454,9 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
         const SizedBox(height: 8),
         _label('GROUP ASSIGNMENT'),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Assign each team to a group. Each group needs at least 2 teams.',
-          style: TextStyle(color: Colors.white54, fontSize: 12),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12),
         ),
         const SizedBox(height: 16),
         ...List.generate(_numTeams, (i) {
@@ -462,20 +465,20 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D2B1E),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white10),
+              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
             ),
             child: Row(children: [
               Expanded(
                 child: Text(_nameCtrl[i].text,
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 13)),
               ),
-              const Text('Group:',
-                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+              Text('Group:',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
               const SizedBox(width: 10),
               Wrap(
                 spacing: 6,
@@ -500,15 +503,15 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
     final isLast = _step == _totalSteps - 1;
     final isFirst = _step == 0;
     return Container(
-      color: const Color(0xFF0D2B1E),
+      color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       child: Row(children: [
         if (!isFirst)
           OutlinedButton(
             onPressed: () => setState(() => _step--),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white70,
-              side: const BorderSide(color: Colors.white30),
+              foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              side: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
@@ -520,7 +523,7 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
           onPressed: _nextStep,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.amber.shade800,
-            foregroundColor: Colors.white,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
             textStyle: const TextStyle(
                 fontSize: 15, fontWeight: FontWeight.bold),
@@ -536,8 +539,8 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
   // ── util ──────────────────────────────────────────────────────────────────
 
   Widget _label(String text) => Text(text,
-      style: const TextStyle(
-          color: Colors.white54,
+      style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
           fontSize: 10,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.5));
@@ -546,13 +549,13 @@ class _BigTournamentSetupScreenState extends State<BigTournamentSetupScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? color : Colors.white10,
+          color: selected ? color : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? color : Colors.white24),
+          border: Border.all(color: selected ? color : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
         ),
         child: Text(label,
             style: TextStyle(
-                color: selected ? Colors.white : Colors.white60,
+                color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 fontWeight:
                     selected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 13)),

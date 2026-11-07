@@ -9,6 +9,9 @@ import '../widgets/pulsing_dot.dart';
 import 'scorecard_screen.dart';
 import 'toss_screen.dart';
 
+/// The main live-scoring screen. Handles ball-by-ball input, wickets, extras,
+/// innings transitions, DLS, super overs, and optional live-broadcast via a
+/// shareable code. Pass [isResuming] = true to reload a saved mid-match state.
 class MatchScreen extends StatefulWidget {
   final MatchState state;
   final void Function(MatchState)? onMatchComplete;
@@ -113,30 +116,29 @@ class _MatchScreenState extends State<MatchScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Live Code',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Live Code',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Share this code with viewers:',
-              style: TextStyle(color: Colors.white54, fontSize: 13)),
+          Text('Share this code with viewers:',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13)),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.greenAccent.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.greenAccent, width: 2),
+              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
             ),
             child: Text(code,
-                style: const TextStyle(
-                    color: Colors.greenAccent,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 8)),
           ),
           const SizedBox(height: 12),
-          const Text('Viewers open the app → Watch Live → enter this code',
-              style: TextStyle(color: Colors.white38, fontSize: 11),
+          Text('Viewers open the app → Watch Live → enter this code',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11),
               textAlign: TextAlign.center),
         ]),
         actions: [
@@ -149,7 +151,7 @@ class _MatchScreenState extends State<MatchScreen>
                     const SnackBar(content: Text('Code copied!')));
               }
             },
-            child: const Text('Copy', style: TextStyle(color: Colors.greenAccent)),
+            child: Text('Copy', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           ),
           TextButton(
             onPressed: () {
@@ -161,7 +163,7 @@ class _MatchScreenState extends State<MatchScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: Colors.white54)),
+            child: Text('Close', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
           ),
         ],
       ),
@@ -216,7 +218,7 @@ class _MatchScreenState extends State<MatchScreen>
       child: Text(
         _flashLabel,
         style: TextStyle(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.onSurface,
           fontSize: fontSize,
           fontWeight: FontWeight.w900,
           height: 1.0,
@@ -262,7 +264,7 @@ class _MatchScreenState extends State<MatchScreen>
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
       child: Text(label,
-          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -547,9 +549,8 @@ class _MatchScreenState extends State<MatchScreen>
         if (_isHundred) selected = justBowledIdx;
         return StatefulBuilder(builder: (ctx, setSt) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF0D2B1E),
-            title: Text(dialogTitle,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                title: Text(dialogTitle,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
             content: SizedBox(
               width: 340,
               child: Column(
@@ -578,7 +579,7 @@ class _MatchScreenState extends State<MatchScreen>
                         _isHundred
                             ? 'Same bowler can continue or pick another:'
                             : 'Choose the bowler for the next over:',
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -620,14 +621,14 @@ class _MatchScreenState extends State<MatchScreen>
                                 groupValue: selected,
                                 onChanged: disabled ? null : (v) => setSt(() => selected = v),
                                 fillColor: WidgetStateProperty.all(
-                                    disabled ? Colors.white24 : Colors.greenAccent),
+                                    disabled ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24) : Theme.of(context).colorScheme.primary),
                               ),
                               title: Row(children: [
                                 Flexible(
                                   child: Text(p.name,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                          color: disabled ? Colors.white30 : Colors.white,
+                                          color: disabled ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3) : Theme.of(context).colorScheme.onSurface,
                                           decoration: disabled ? TextDecoration.lineThrough : null)),
                                 ),
                                 const SizedBox(width: 6),
@@ -637,11 +638,11 @@ class _MatchScreenState extends State<MatchScreen>
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                                     decoration: BoxDecoration(
-                                        color: Colors.green.shade900,
+                                        color: Theme.of(context).colorScheme.surface,
                                         borderRadius: BorderRadius.circular(4)),
-                                    child: const Text('Cont.',
+                                    child: Text('Cont.',
                                         style: TextStyle(
-                                            color: Colors.greenAccent, fontSize: 10,
+                                            color: Theme.of(context).colorScheme.primary, fontSize: 10,
                                             fontWeight: FontWeight.bold)),
                                   ),
                                 ],
@@ -663,7 +664,7 @@ class _MatchScreenState extends State<MatchScreen>
                                   _isHundred
                                       ? '${p.ballsBowled} / 20 balls  ${p.runsConceded}R  ${p.wicketsTaken}W'
                                       : '${_bowlerSetsDisplay(p)} / $_maxSetsPerBowler ov  ${p.runsConceded}R  ${p.wicketsTaken}W',
-                                  style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
                             );
                           }).toList(),
                         ),
@@ -687,8 +688,8 @@ class _MatchScreenState extends State<MatchScreen>
                         });
                         Navigator.pop(ctx);
                       },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade700),
-                child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+                child: Text('Confirm', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
               ),
             ],
           );
@@ -711,8 +712,7 @@ class _MatchScreenState extends State<MatchScreen>
       barrierDismissible: false,
       builder: (_) => StatefulBuilder(builder: (ctx, setSt) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF0D2B1E),
-          title: const Text('Wicket!',
+            title: const Text('Wicket!',
               style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 22)),
           content: SizedBox(
             width: 360,
@@ -722,9 +722,9 @@ class _MatchScreenState extends State<MatchScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Batsman: ${inn.striker.name}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  const Text('Dismissal type:', style: TextStyle(color: Colors.white70)),
+                  Text('Dismissal type:', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8, runSpacing: 8,
@@ -737,16 +737,15 @@ class _MatchScreenState extends State<MatchScreen>
                           runsCompleted = 0;
                         }),
                         selectedColor: Colors.red.shade700,
-                        labelStyle: TextStyle(color: sel ? Colors.white : Colors.white70),
-                        backgroundColor: const Color(0xFF1B3A2D),
-                      );
+                        labelStyle: TextStyle(color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                                        );
                     }).toList(),
                   ),
                   // Run Out: runs completed before the dismissal
                   if (dismissal == 'Run Out') ...[
                     const SizedBox(height: 16),
-                    const Text('Runs completed before dismissal:',
-                        style: TextStyle(color: Colors.white70)),
+                    Text('Runs completed before dismissal:',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -758,13 +757,13 @@ class _MatchScreenState extends State<MatchScreen>
                             duration: const Duration(milliseconds: 120),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: sel ? Colors.orange.shade800 : const Color(0xFF1B3A2D),
+                              color: sel ? Colors.orange.shade800 : Theme.of(context).scaffoldBackgroundColor,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: sel ? Colors.orange : Colors.white24),
+                              border: Border.all(color: sel ? Colors.orange : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                             ),
                             child: Text('$r',
                                 style: TextStyle(
-                                    color: sel ? Colors.white : Colors.white60,
+                                    color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                     fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
                           ),
                         );
@@ -773,27 +772,27 @@ class _MatchScreenState extends State<MatchScreen>
                   ],
                   if (dismissal == 'Caught' || dismissal == 'Run Out' || dismissal == 'Stumped') ...[
                     const SizedBox(height: 16),
-                    const Text('Fielder:', style: TextStyle(color: Colors.white70)),
+                    Text('Fielder:', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                     const SizedBox(height: 6),
                     DropdownButton<int>(
-                      dropdownColor: const Color(0xFF0D2B1E),
-                      hint: const Text('Select fielder', style: TextStyle(color: Colors.white54)),
+                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      hint: Text('Select fielder', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
                       value: fielderIndex, isExpanded: true,
                       items: List.generate(inn.bowlingTeamPlayers.length, (i) =>
                           DropdownMenuItem(
                             value: i,
                             child: Text(inn.bowlingTeamPlayers[i].name,
-                                style: const TextStyle(color: Colors.white)),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                           )),
                       onChanged: (v) => setSt(() => fielderIndex = v),
                     ),
                   ],
                   const SizedBox(height: 16),
-                  const Text('Next Batsman:', style: TextStyle(color: Colors.white70)),
+                  Text('Next Batsman:', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                   const SizedBox(height: 6),
                   DropdownButton<int>(
-                    dropdownColor: const Color(0xFF0D2B1E),
-                    hint: const Text('Select next batsman', style: TextStyle(color: Colors.white54)),
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    hint: Text('Select next batsman', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
                     value: nextBatsman, isExpanded: true,
                     items: List.generate(inn.battingTeamPlayers.length, (i) {
                       final p = inn.battingTeamPlayers[i];
@@ -802,7 +801,7 @@ class _MatchScreenState extends State<MatchScreen>
                       return DropdownMenuItem(
                           value: i,
                           child: Text('${i + 1}. ${p.name}',
-                              style: const TextStyle(color: Colors.white)));
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
                     }).whereType<DropdownMenuItem<int>>().toList(),
                     onChanged: (v) => setSt(() => nextBatsman = v),
                   ),
@@ -813,7 +812,7 @@ class _MatchScreenState extends State<MatchScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+              child: Text('Cancel', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
             ),
             ElevatedButton(
               onPressed: nextBatsman == null && inn.wickets < 9 ? null : () {
@@ -875,7 +874,7 @@ class _MatchScreenState extends State<MatchScreen>
                 _showFlash('OUT!', Colors.red.shade700);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
-              child: const Text('Confirm Wicket', style: TextStyle(color: Colors.white)),
+              child: Text('Confirm Wicket', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ],
         );
@@ -888,17 +887,16 @@ class _MatchScreenState extends State<MatchScreen>
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: const Text('Innings Break',
             style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 22)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(_scoreText(ms.innings1),
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16),
               textAlign: TextAlign.center),
           const SizedBox(height: 8),
           Text('${ms.bowlingTeamName} needs ${ms.innings1.totalRuns + 1} runs to win'
               '${_isTest ? "" : " in ${ms.setup.overs} ${_isHundred ? "sets" : "overs"}"}',
-              style: const TextStyle(color: Colors.greenAccent, fontSize: 15),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 15),
               textAlign: TextAlign.center),
         ]),
         actions: [
@@ -908,8 +906,8 @@ class _MatchScreenState extends State<MatchScreen>
               Navigator.pop(context);
               _showOpeningSelection();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade700),
-            child: const Text('Start 2nd Innings', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+            child: Text('Start 2nd Innings', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -948,11 +946,10 @@ class _MatchScreenState extends State<MatchScreen>
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: Text(title,
             style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 20)),
         content: Text(body,
-            style: const TextStyle(color: Colors.white, fontSize: 15),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 15),
             textAlign: TextAlign.center),
         actions: [
           ElevatedButton(
@@ -961,8 +958,8 @@ class _MatchScreenState extends State<MatchScreen>
               Navigator.pop(context);
               _showOpeningSelection();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade700),
-            child: Text(nextLabel, style: const TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+            child: Text(nextLabel, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -992,15 +989,16 @@ class _MatchScreenState extends State<MatchScreen>
           Widget sectionLabel(String text) => Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 8),
                 child: Text(text,
-                    style: const TextStyle(
-                        color: Colors.greenAccent, fontSize: 11,
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary, fontSize: 11,
                         fontWeight: FontWeight.bold, letterSpacing: 1.5)),
               );
 
+          final cs = Theme.of(context).colorScheme;
           Widget playerTile({
             required int index, required Player p,
             required int? groupValue, required void Function(int?) onChanged,
-            bool disabled = false, Color radioColor = Colors.greenAccent,
+            bool disabled = false, Color? radioColor,
           }) =>
               ListTile(
                 dense: true, enabled: !disabled,
@@ -1008,16 +1006,15 @@ class _MatchScreenState extends State<MatchScreen>
                 leading: Radio<int>(
                   value: index, groupValue: groupValue,
                   onChanged: disabled ? null : onChanged,
-                  fillColor: WidgetStateProperty.all(disabled ? Colors.white24 : radioColor),
+                  fillColor: WidgetStateProperty.all(disabled ? cs.onSurface.withValues(alpha: 0.24) : (radioColor ?? cs.primary)),
                 ),
                 title: Text(p.name,
-                    style: TextStyle(color: disabled ? Colors.white30 : Colors.white, fontSize: 13)),
+                    style: TextStyle(color: disabled ? cs.onSurface.withValues(alpha: 0.3) : cs.onSurface, fontSize: 13)),
               );
 
           return AlertDialog(
-            backgroundColor: const Color(0xFF0D2B1E),
-            title: Text('$inningsLabel Innings — Opening Selection',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                title: Text('$inningsLabel Innings — Opening Selection',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
             content: SizedBox(
               width: 400,
               child: SingleChildScrollView(
@@ -1056,7 +1053,7 @@ class _MatchScreenState extends State<MatchScreen>
                         title: Row(children: [
                           Flexible(child: Text(e.value.name,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontSize: 13))),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13))),
                           const SizedBox(width: 6),
                           _bowlerTypeBadge(e.value),
                         ]),
@@ -1084,8 +1081,8 @@ class _MatchScreenState extends State<MatchScreen>
                   });
                   Navigator.pop(ctx);
                 } : null,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade700),
-                child: const Text('Start Innings', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+                child: Text('Start Innings', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
               ),
             ],
           );
@@ -1099,7 +1096,6 @@ class _MatchScreenState extends State<MatchScreen>
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: Text(
           round == 1 ? 'Super Over!' : 'Super Over #$round!',
           style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 22),
@@ -1109,7 +1105,7 @@ class _MatchScreenState extends State<MatchScreen>
           round == 1
               ? 'Match tied!\nEach team faces 1 over to decide the winner.'
               : 'Super over tied again!\nAnother super over will decide the winner.',
-          style: const TextStyle(color: Colors.white70, fontSize: 14),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 14),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -1121,7 +1117,7 @@ class _MatchScreenState extends State<MatchScreen>
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber.shade700,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
               child: Text(round == 1 ? 'Start Super Over' : 'Start Super Over #$round'),
@@ -1180,14 +1176,13 @@ class _MatchScreenState extends State<MatchScreen>
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: const Text('Match Over!',
             style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 24)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(ms.matchResult,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
                 textAlign: TextAlign.center),
             if (mom != null) ...[
               const SizedBox(height: 16),
@@ -1208,8 +1203,8 @@ class _MatchScreenState extends State<MatchScreen>
                             : null,
                       )));
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade700),
-            child: const Text('View Scorecard', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+            child: Text('View Scorecard', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ),
         ],
       ),
@@ -1225,11 +1220,9 @@ class _MatchScreenState extends State<MatchScreen>
         (_isTest && ms.currentInnings == 4);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: Text('${ms.battingTeamName} vs ${ms.bowlingTeamName}',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15)),
         actions: [
           if (widget.onMatchComplete == null)
             _liveCode != null
@@ -1250,15 +1243,15 @@ class _MatchScreenState extends State<MatchScreen>
                     ),
                   )
                 : IconButton(
-                    icon: const Icon(Icons.wifi_tethering, color: Colors.white54),
+                    icon: Icon(Icons.wifi_tethering, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
                     tooltip: 'Go Live',
                     onPressed: _goLive,
                   ),
           TextButton.icon(
             onPressed: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => ScorecardScreen(state: ms))),
-            icon: const Icon(Icons.list_alt, color: Colors.greenAccent),
-            label: const Text('Scorecard', style: TextStyle(color: Colors.greenAccent)),
+            icon: Icon(Icons.list_alt, color: Theme.of(context).colorScheme.primary),
+            label: Text('Scorecard', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           ),
         ],
       ),
@@ -1327,23 +1320,23 @@ class _MatchScreenState extends State<MatchScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [const Color(0xFF0D2B1E), Colors.green.shade900],
+          colors: [Theme.of(context).colorScheme.surface, Theme.of(context).colorScheme.surface],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.greenAccent.withValues(alpha:0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(ms.battingTeamName,
-                style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13)),
             Text('${inn.totalRuns}/${inn.wickets}',
-                style: const TextStyle(color: Colors.white, fontSize: 42,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 42,
                     fontWeight: FontWeight.bold, height: 1.1)),
             Text(oversLine,
-                style: const TextStyle(color: Colors.white60, fontSize: 13)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
           ]),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             if (_isHundred) ...[
@@ -1352,19 +1345,19 @@ class _MatchScreenState extends State<MatchScreen>
               const SizedBox(height: 4),
             ],
             Text('Extras: ${inn.totalExtras}',
-                style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12)),
             Text('W${inn.wides} NB${inn.noBalls} B${inn.byes} LB${inn.legByes}',
-                style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
             if (!_isHundred) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                    color: Colors.green.shade900,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(6)),
                 child: Text(ms.setup.formatLabel,
-                    style: const TextStyle(
-                        color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary, fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],
           ]),
@@ -1396,7 +1389,7 @@ class _MatchScreenState extends State<MatchScreen>
     // Test innings 2: show 1st innings lead/deficit
     if (_isTest && ms.currentInnings == 2) {
       final lead = ms.innings1.totalRuns - ms.innings2.totalRuns;
-      final color = lead > 0 ? Colors.redAccent : Colors.greenAccent;
+      final color = lead > 0 ? Colors.redAccent : Theme.of(context).colorScheme.primary;
       final label = lead > 0 ? 'Trail by $lead' : 'Lead by ${-lead}';
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -1406,7 +1399,7 @@ class _MatchScreenState extends State<MatchScreen>
           border: Border.all(color: Colors.blueGrey.withValues(alpha:0.3)),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          _statPill('1st Inn Target', '${ms.innings1.totalRuns + 1}', Colors.white70),
+          _statPill('1st Inn Target', '${ms.innings1.totalRuns + 1}', Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
           _statPill('Status', label, color),
         ]),
       );
@@ -1437,7 +1430,7 @@ class _MatchScreenState extends State<MatchScreen>
 
   Widget _statPill(String label, String value, Color color) =>
       Column(children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+        Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11)),
         const SizedBox(height: 2),
         Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
       ]);
@@ -1449,20 +1442,20 @@ class _MatchScreenState extends State<MatchScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+        Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13)),
         if (_isHundred && ballsInPeriod != null)
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Text('(${ballsInPeriod + 1}/10)',
-                style: const TextStyle(color: Colors.white24, fontSize: 11)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontSize: 11)),
           ),
         ...inn.ballLog.map(_ballChip),
         if (inn.ballLog.isEmpty)
-          const Text('—', style: TextStyle(color: Colors.white30, fontSize: 13)),
+          Text('—', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 13)),
       ]),
     );
   }
@@ -1487,7 +1480,7 @@ class _MatchScreenState extends State<MatchScreen>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Text(label,
-          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -1509,10 +1502,10 @@ class _MatchScreenState extends State<MatchScreen>
   }
 
   TableRow _tableHeader(List<String> cols) => TableRow(
-    decoration: BoxDecoration(color: Colors.green.shade900.withValues(alpha:0.5)),
+    decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
     children: cols.map((c) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-      child: Text(c, style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
+      child: Text(c, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11, fontWeight: FontWeight.bold)),
     )).toList(),
   );
 
@@ -1522,9 +1515,9 @@ class _MatchScreenState extends State<MatchScreen>
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         child: Row(children: [
-          if (isStriker) const Text('* ', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+          if (isStriker) Text('* ', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
           Flexible(child: Text(p.name,
-              style: const TextStyle(color: Colors.white, fontSize: 12), overflow: TextOverflow.ellipsis)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), overflow: TextOverflow.ellipsis)),
         ]),
       ),
       _tc('${p.runsScored}', bold: true),
@@ -1538,7 +1531,7 @@ class _MatchScreenState extends State<MatchScreen>
   Widget _tc(String text, {bool bold = false}) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
     child: Text(text,
-        style: TextStyle(color: Colors.white, fontSize: 12,
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12,
             fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
   );
 
@@ -1560,7 +1553,7 @@ class _MatchScreenState extends State<MatchScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               child: Text(b.name,
-                  style: const TextStyle(color: Colors.white, fontSize: 12), overflow: TextOverflow.ellipsis),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12), overflow: TextOverflow.ellipsis),
             ),
             _tc(_isHundred ? '${b.ballsBowled}' : oDisplay),
             _tc('${b.runsConceded}'),
@@ -1576,13 +1569,13 @@ class _MatchScreenState extends State<MatchScreen>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title,
-            style: const TextStyle(color: Colors.greenAccent, fontSize: 12,
+            style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12,
                 fontWeight: FontWeight.bold, letterSpacing: 1)),
         const SizedBox(height: 8),
         child,
@@ -1594,7 +1587,7 @@ class _MatchScreenState extends State<MatchScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('SCORE', style: TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 2)),
+        Text('SCORE', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11, letterSpacing: 2)),
         const SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: [
           _runBtn('0', 0), _runBtn('1', 1), _runBtn('2', 2), _runBtn('3', 3),
@@ -1602,7 +1595,7 @@ class _MatchScreenState extends State<MatchScreen>
           _runBtn('6', 6, color: Colors.purple.shade700),
         ]),
         const SizedBox(height: 12),
-        const Text('EXTRAS', style: TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 2)),
+        Text('EXTRAS', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11, letterSpacing: 2)),
         const SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: [
           _extraBtn('Wide', Colors.orange.shade800, _showWideDialog),
@@ -1620,7 +1613,7 @@ class _MatchScreenState extends State<MatchScreen>
     child: ElevatedButton(
       onPressed: () => _addRuns(runs),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color ?? Colors.green.shade800, foregroundColor: Colors.white,
+        backgroundColor: color ?? Theme.of(context).colorScheme.surface, foregroundColor: Theme.of(context).colorScheme.onSurface,
         padding: EdgeInsets.zero,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -1631,7 +1624,7 @@ class _MatchScreenState extends State<MatchScreen>
   Widget _extraBtn(String label, Color color, VoidCallback onTap) => ElevatedButton(
     onPressed: onTap,
     style: ElevatedButton.styleFrom(
-      backgroundColor: color, foregroundColor: Colors.white,
+      backgroundColor: color, foregroundColor: Theme.of(context).colorScheme.onSurface,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ),
@@ -1650,27 +1643,26 @@ class _MatchScreenState extends State<MatchScreen>
       builder: (_) => StatefulBuilder(builder: (ctx, setSt) {
         final canConfirm = !isStumped || nextBatsman != null || inn.wickets >= 9;
         return AlertDialog(
-          backgroundColor: const Color(0xFF0D2B1E),
-          title: const Text('Wide', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+            title: const Text('Wide', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
           content: SizedBox(
             width: 340,
             child: SingleChildScrollView(
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Text('Extra runs (overthrows):', style: TextStyle(color: Colors.white70)),
+                Text('Extra runs (overthrows):', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                 const SizedBox(height: 12),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   IconButton(
-                    icon: const Icon(Icons.remove, color: Colors.white),
+                    icon: Icon(Icons.remove, color: Theme.of(context).colorScheme.onSurface),
                     onPressed: () { if (extraRuns > 0) setSt(() => extraRuns--); },
                   ),
                   Text('$extraRuns',
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold)),
                   IconButton(
-                    icon: const Icon(Icons.add, color: Colors.white),
+                    icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onSurface),
                     onPressed: () => setSt(() => extraRuns++),
                   ),
                 ]),
-                const Divider(color: Colors.white12, height: 24),
+                Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 24),
                 // Stumping on wide
                 GestureDetector(
                   onTap: () => setSt(() {
@@ -1684,50 +1676,50 @@ class _MatchScreenState extends State<MatchScreen>
                       color: isStumped ? Colors.red.shade900.withValues(alpha:0.3) : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: isStumped ? Colors.redAccent.withValues(alpha:0.5) : Colors.white24),
+                          color: isStumped ? Colors.redAccent.withValues(alpha:0.5) : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                     ),
                     child: Row(children: [
                       Icon(
                         isStumped ? Icons.check_box : Icons.check_box_outline_blank,
-                        color: isStumped ? Colors.redAccent : Colors.white54,
+                        color: isStumped ? Colors.redAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      const Expanded(
+                      Expanded(
                         child: Text('Wicket — Stumped on this wide',
-                            style: TextStyle(color: Colors.white70, fontSize: 13)),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13)),
                       ),
                     ]),
                   ),
                 ),
                 if (isStumped) ...[
                   const SizedBox(height: 14),
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Stumped by (keeper):', style: TextStyle(color: Colors.white70)),
+                    child: Text('Stumped by (keeper):', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                   ),
                   const SizedBox(height: 6),
                   DropdownButton<int>(
-                    dropdownColor: const Color(0xFF0D2B1E),
-                    hint: const Text('Select keeper', style: TextStyle(color: Colors.white54)),
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    hint: Text('Select keeper', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
                     value: stumpedByIdx, isExpanded: true,
                     items: List.generate(inn.bowlingTeamPlayers.length, (i) =>
                         DropdownMenuItem(
                           value: i,
                           child: Text(inn.bowlingTeamPlayers[i].name,
-                              style: const TextStyle(color: Colors.white)),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                         )),
                     onChanged: (v) => setSt(() => stumpedByIdx = v),
                   ),
                   const SizedBox(height: 12),
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Next Batsman:', style: TextStyle(color: Colors.white70)),
+                    child: Text('Next Batsman:', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                   ),
                   const SizedBox(height: 6),
                   DropdownButton<int>(
-                    dropdownColor: const Color(0xFF0D2B1E),
-                    hint: const Text('Select next batsman', style: TextStyle(color: Colors.white54)),
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    hint: Text('Select next batsman', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
                     value: nextBatsman, isExpanded: true,
                     items: List.generate(inn.battingTeamPlayers.length, (i) {
                       final p = inn.battingTeamPlayers[i];
@@ -1736,7 +1728,7 @@ class _MatchScreenState extends State<MatchScreen>
                       return DropdownMenuItem(
                           value: i,
                           child: Text('${i + 1}. ${p.name}',
-                              style: const TextStyle(color: Colors.white)));
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
                     }).whereType<DropdownMenuItem<int>>().toList(),
                     onChanged: (v) => setSt(() => nextBatsman = v),
                   ),
@@ -1746,7 +1738,7 @@ class _MatchScreenState extends State<MatchScreen>
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
+                child: Text('Cancel', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
             ElevatedButton(
               onPressed: canConfirm ? () {
                 if (isStumped) {
@@ -1760,7 +1752,7 @@ class _MatchScreenState extends State<MatchScreen>
               style: ElevatedButton.styleFrom(
                   backgroundColor: isStumped ? Colors.red.shade700 : Colors.orange.shade800),
               child: Text(isStumped ? 'Wide + Wicket' : 'Add Wide',
-                  style: const TextStyle(color: Colors.white)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ],
         );
@@ -1827,32 +1819,30 @@ class _MatchScreenState extends State<MatchScreen>
       context: context,
       builder: (_) => StatefulBuilder(builder: (ctx, setSt) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF0D2B1E),
-          title: const Text('No Ball', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+            title: const Text('No Ball', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Runs off the bat:', style: TextStyle(color: Colors.white70)),
+            Text('Runs off the bat:', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
             const SizedBox(height: 8),
             Wrap(spacing: 8, children: [0,1,2,3,4,6].map((r) => ChoiceChip(
               label: Text('$r'), selected: runs == r,
               onSelected: (_) => setSt(() => runs = r),
               selectedColor: Colors.amber.shade700,
-              labelStyle: TextStyle(color: runs == r ? Colors.white : Colors.white70),
-              backgroundColor: const Color(0xFF1B3A2D),
-            )).toList()),
+              labelStyle: TextStyle(color: runs == r ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                    )).toList()),
             const SizedBox(height: 12),
             Row(children: [
               Checkbox(value: isBye, onChanged: (v) => setSt(() => isBye = v ?? false),
                   activeColor: Colors.teal),
-              const Text('Bye off No Ball', style: TextStyle(color: Colors.white70)),
+              Text('Bye off No Ball', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
             ]),
           ]),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
+                child: Text('Cancel', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
             ElevatedButton(
               onPressed: () { _addRuns(runs, noBall: true, bye: isBye); Navigator.pop(ctx); },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.amber.shade800),
-              child: const Text('Add No Ball', style: TextStyle(color: Colors.white)),
+              child: Text('Add No Ball', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ],
         );
@@ -1866,27 +1856,25 @@ class _MatchScreenState extends State<MatchScreen>
       context: context,
       builder: (_) => StatefulBuilder(builder: (ctx, setSt) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF0D2B1E),
-          title: Text(bye ? 'Bye' : 'Leg Bye',
+            title: Text(bye ? 'Bye' : 'Leg Bye',
               style: TextStyle(color: bye ? Colors.teal : Colors.cyan, fontWeight: FontWeight.bold)),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Runs:', style: TextStyle(color: Colors.white70)),
+            Text('Runs:', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
             const SizedBox(height: 8),
             Wrap(spacing: 8, children: [1,2,3,4].map((r) => ChoiceChip(
               label: Text('$r'), selected: runs == r,
               onSelected: (_) => setSt(() => runs = r),
               selectedColor: Colors.teal.shade700,
-              labelStyle: TextStyle(color: runs == r ? Colors.white : Colors.white70),
-              backgroundColor: const Color(0xFF1B3A2D),
-            )).toList()),
+              labelStyle: TextStyle(color: runs == r ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                    )).toList()),
           ]),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
+                child: Text('Cancel', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
             ElevatedButton(
               onPressed: () { _addRuns(runs, bye: bye, legBye: !bye); Navigator.pop(ctx); },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade700),
-              child: Text('Add ${bye ? "Bye" : "Leg Bye"}', style: const TextStyle(color: Colors.white)),
+              child: Text('Add ${bye ? "Bye" : "Leg Bye"}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ],
         );
@@ -1913,12 +1901,12 @@ class _MatchScreenState extends State<MatchScreen>
             child: Row(children: [
               SizedBox(width: 36,
                   child: Text('$setLabel $num',
-                      style: const TextStyle(color: Colors.white54, fontSize: 11))),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11))),
               const SizedBox(width: 6),
               ...balls.map(_ballChip),
               const Spacer(),
               Text('$total',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.bold)),
             ]),
           );
         }).toList(),
@@ -1958,17 +1946,17 @@ class _MotmCard extends StatelessWidget {
           ]),
           const SizedBox(height: 6),
           Text(mom.playerName,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 15,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
           Text('${mom.teamName} · ${mom.roleLabel}',
-              style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
           if (mom.statsLine.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(mom.statsLine,
-                style: const TextStyle(color: Colors.greenAccent, fontSize: 11),
+                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 11),
                 textAlign: TextAlign.center),
           ],
         ],

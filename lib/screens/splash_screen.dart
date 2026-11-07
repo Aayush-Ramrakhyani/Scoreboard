@@ -143,7 +143,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF061410),
+      backgroundColor: Colors.black,
       body: AnimatedBuilder(
         animation: Listenable.merge(
             [_iconCtrl, _textCtrl, _pulseCtrl, _exitCtrl]),
@@ -161,7 +161,7 @@ class _SplashScreenState extends State<SplashScreen>
                       gradient: RadialGradient(
                         center: Alignment(0, -0.15),
                         radius: 1.15,
-                        colors: [Color(0xFF1B4A2F), Color(0xFF061410)],
+                        colors: [Color(0xFF1A1A1A), Colors.black],
                         stops: [0.0, 1.0],
                       ),
                     ),
@@ -191,7 +191,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.greenAccent.withValues(alpha:
+                                      color: Colors.white.withValues(alpha:
                                           _pulseOpacity.value),
                                       width: 2,
                                     ),
@@ -208,7 +208,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.greenAccent.withValues(alpha:
+                                      color: Colors.white.withValues(alpha:
                                           _pulseOpacity.value * 0.5),
                                       width: 1,
                                     ),
@@ -225,7 +225,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.greenAccent
+                                        color: Colors.white
                                             .withValues(alpha:0.35),
                                         blurRadius: 48,
                                         spreadRadius: 12,
@@ -251,12 +251,12 @@ class _SplashScreenState extends State<SplashScreen>
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                           colors: [
-                                            Colors.green.shade500,
-                                            Colors.green.shade900,
+                                            Colors.grey.shade700,
+                                            Colors.grey.shade900,
                                           ],
                                         ),
                                         border: Border.all(
-                                          color: Colors.greenAccent
+                                          color: Colors.white
                                               .withValues(alpha:0.6),
                                           width: 1.5,
                                         ),
@@ -311,9 +311,9 @@ class _SplashScreenState extends State<SplashScreen>
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(colors: [
-                                Colors.greenAccent.withValues(alpha:0),
-                                Colors.greenAccent,
-                                Colors.greenAccent.withValues(alpha:0),
+                                Colors.white.withValues(alpha:0),
+                                Colors.white,
+                                Colors.white.withValues(alpha:0),
                               ]),
                             ),
                           ),
@@ -329,7 +329,7 @@ class _SplashScreenState extends State<SplashScreen>
                             child: Text(
                               'SCOREBOARD',
                               style: TextStyle(
-                                color: Colors.greenAccent.withValues(alpha:0.9),
+                                color: Colors.white.withValues(alpha:0.9),
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 9,
@@ -376,7 +376,7 @@ class _SplashScreenState extends State<SplashScreen>
                             height: 7,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.greenAccent
+                              color: Colors.white
                                   .withValues(alpha:0.2 + 0.8 * bright),
                             ),
                           );

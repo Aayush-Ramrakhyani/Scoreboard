@@ -3,6 +3,9 @@ import '../database/history_database.dart';
 import '../services/tournament_history_service.dart';
 import 'tournament_home_screen.dart';
 
+/// Displays completed matches and tournaments stored in local SQLite history.
+/// Two tabs: standalone matches and tournament runs. Tapping an entry reopens
+/// its scorecard or tournament summary.
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
   @override
@@ -73,16 +76,15 @@ class _HistoryScreenState extends State<HistoryScreen>
     final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF0D2B1E),
-            title: const Text('Clear History',
-                style: TextStyle(color: Colors.white)),
-            content: const Text('Delete all history?\nThis cannot be undone.',
-                style: TextStyle(color: Colors.white70)),
+                title: Text('Clear History',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            content: Text('Delete all history?\nThis cannot be undone.',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: Colors.white54))),
+                  child: Text('Cancel',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
               TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: const Text('Clear All',
@@ -116,7 +118,7 @@ class _HistoryScreenState extends State<HistoryScreen>
       context: context,
       barrierDismissible: false,
       builder: (_) =>
-          const Center(child: CircularProgressIndicator(color: Colors.greenAccent)),
+          Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
     );
 
     final tournament = await TournamentHistoryService.loadById(fid);
@@ -143,11 +145,9 @@ class _HistoryScreenState extends State<HistoryScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('History',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('History',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         actions: [
           if (_all.isNotEmpty)
             IconButton(
@@ -159,15 +159,15 @@ class _HistoryScreenState extends State<HistoryScreen>
         ],
         bottom: TabBar(
           controller: _tab,
-          labelColor: Colors.greenAccent,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: Colors.greenAccent,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+          indicatorColor: Theme.of(context).colorScheme.primary,
           tabs: _tabs.map((t) => Tab(text: t)).toList(),
         ),
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.greenAccent))
+          ? Center(
+              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
           : TabBarView(
               controller: _tab,
               children: _tabs.map((t) => _buildList(_filter(t))).toList(),
@@ -177,15 +177,15 @@ class _HistoryScreenState extends State<HistoryScreen>
 
   Widget _buildList(List<HistoryEntry> entries) {
     if (entries.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.history, color: Colors.white12, size: 64),
+          Icon(Icons.history, color: Theme.of(context).colorScheme.outlineVariant, size: 64),
           SizedBox(height: 16),
           Text('No history yet',
-              style: TextStyle(color: Colors.white38, fontSize: 16)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 16)),
           SizedBox(height: 6),
           Text("Play matches and they'll appear here",
-              style: TextStyle(color: Colors.white24, fontSize: 13)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), fontSize: 13)),
         ]),
       );
     }
@@ -213,7 +213,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           color: Colors.red.shade900,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Icon(Icons.delete_outline, color: Colors.white),
+        child: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurface),
       ),
       onDismissed: (_) => _deleteEntry(entry),
       child: GestureDetector(
@@ -221,7 +221,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFF0D2B1E),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: color.withValues(alpha: 0.25)),
           ),
@@ -241,8 +241,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                 Row(children: [
                   Expanded(
                     child: Text(entry.title,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.bold,
                             fontSize: 14),
                         maxLines: 1,
@@ -266,19 +266,19 @@ class _HistoryScreenState extends State<HistoryScreen>
                 const SizedBox(height: 4),
                 Text(entry.result,
                     style:
-                        const TextStyle(color: Colors.greenAccent, fontSize: 12),
+                        TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 3),
                 Row(children: [
                   Text(_dateLabel(date),
                       style:
-                          const TextStyle(color: Colors.white30, fontSize: 11)),
-                  if (isTournament) ...const [
+                          TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11)),
+                  if (isTournament) ...[
                     SizedBox(width: 8),
                     Text('Tap to view details',
                         style: TextStyle(
-                            color: Colors.white24,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
                             fontSize: 10,
                             fontStyle: FontStyle.italic)),
                   ],
@@ -286,7 +286,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               ]),
             ),
             if (isTournament)
-              const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
+              Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), size: 18),
           ]),
         ),
       ),
@@ -299,7 +299,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         'triseries' => Colors.indigo.shade400,
         'multiformat' => Colors.deepOrange.shade400,
         'tournament' => Colors.amber.shade500,
-        _ => Colors.white54,
+        _ => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
       };
 
   IconData _typeIcon(String type) => switch (type) {

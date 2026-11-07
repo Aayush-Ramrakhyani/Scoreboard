@@ -5,6 +5,8 @@ import '../services/template_service.dart';
 import 'squad_entry.dart';
 import 'tournament_home_screen.dart';
 
+/// Setup wizard for a tri-nation series (round-robin group stage + final).
+/// Optionally pre-fills from a saved [templateName].
 class TriSeriesSetupScreen extends StatefulWidget {
   final String? templateName;
   const TriSeriesSetupScreen({super.key, this.templateName});
@@ -102,15 +104,13 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Tri-Series Setup',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Tri-Series Setup',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tab,
           labelColor: Colors.indigoAccent,
-          unselectedLabelColor: Colors.white54,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
           indicatorColor: Colors.indigoAccent,
           tabs: [
             const Tab(text: 'Info'),
@@ -127,7 +127,7 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
           ...[0, 1, 2].map((i) {
             final sq = _squads[i];
             final accent = [
-              Colors.green.shade700,
+              Theme.of(context).colorScheme.primary,
               Colors.blue.shade700,
               Colors.purple.shade700,
             ][i];
@@ -171,7 +171,7 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
           onPressed: _start,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.indigo.shade600,
-            foregroundColor: Colors.white,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             padding: const EdgeInsets.symmetric(vertical: 18),
             textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -189,12 +189,12 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.indigoAccent.withOpacity(0.3)),
         ),
-        child: const Text(
+        child: Text(
           '• 3 teams · each pair plays twice = 6 league matches\n'
           '• Points: Win = 2, Tie = 1, Loss = 0\n'
           '• Tiebreaker: Net Run Rate\n'
           '• Top 2 teams play the Final',
-          style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.6),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, height: 1.6),
         ),
       );
 
@@ -207,8 +207,8 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('MATCH FORMAT',
-            style: TextStyle(color: Colors.white54, fontSize: 10,
+        Text('MATCH FORMAT',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 10,
                 fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         const SizedBox(height: 10),
         Wrap(
@@ -221,16 +221,16 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: sel ? Colors.indigo.shade700.withOpacity(0.5) : const Color(0xFF0D2B1E),
+                  color: sel ? Colors.indigo.shade700.withOpacity(0.5) : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: sel ? Colors.indigoAccent : Colors.white24),
+                  border: Border.all(color: sel ? Colors.indigoAccent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(f.$2, style: TextStyle(
-                      color: sel ? Colors.white : Colors.white70,
+                      color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       fontWeight: sel ? FontWeight.bold : FontWeight.normal,
                       fontSize: 13)),
-                  Text(f.$3, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                  Text(f.$3, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
                 ]),
               ),
             );
@@ -246,10 +246,10 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
       controller: ctrl,
       onChanged: (_) => setState(() {}),
       keyboardType: numeric ? TextInputType.number : TextInputType.text,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white60),
+        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
         prefixIcon: Icon(icon, color: Colors.indigoAccent),
         enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.indigo.shade700),
@@ -258,7 +258,7 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
             borderSide: const BorderSide(color: Colors.indigoAccent, width: 2),
             borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: const Color(0xFF0D2B1E),
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }
@@ -273,12 +273,12 @@ class _TriSeriesSetupScreenState extends State<TriSeriesSetupScreen>
           child: Row(children: [
             Expanded(
               child: Text(ctrl.text.isEmpty ? 'Team' : ctrl.text,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
             ),
             TextButton.icon(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white70,
+                foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

@@ -13,6 +13,11 @@ import 'playing_xi_screen.dart';
 import 'scorecard_screen.dart';
 import 'toss_screen.dart';
 
+// ── TournamentHomeScreen ──────────────────────────────────────────────────────
+
+/// Central hub for an ongoing tournament. Shows the fixture list, points table,
+/// squad, and aggregate stats. Orchestrates match launches, live-broadcast, and
+/// saves state to Firestore so tournaments can be resumed across sessions.
 class TournamentHomeScreen extends StatefulWidget {
   final AnyTournament tournament;
   final String? customTitle;
@@ -76,30 +81,29 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Live Code',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Live Code',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Share this code with viewers:',
-              style: TextStyle(color: Colors.white54, fontSize: 13)),
+          Text('Share this code with viewers:',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13)),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.greenAccent.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.greenAccent, width: 2),
+              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
             ),
             child: Text(code,
-                style: const TextStyle(
-                    color: Colors.greenAccent,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 8)),
           ),
           const SizedBox(height: 12),
-          const Text('Viewers: open app → Watch Live → enter code',
-              style: TextStyle(color: Colors.white38, fontSize: 11),
+          Text('Viewers: open app → Watch Live → enter code',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11),
               textAlign: TextAlign.center),
         ]),
         actions: [
@@ -112,7 +116,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                     const SnackBar(content: Text('Code copied!')));
               }
             },
-            child: const Text('Copy', style: TextStyle(color: Colors.greenAccent)),
+            child: Text('Copy', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           ),
           TextButton(
             onPressed: () {
@@ -124,7 +128,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: Colors.white54)),
+            child: Text('Close', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))),
           ),
         ],
       ),
@@ -308,12 +312,10 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: Text(_title,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15)),
         actions: [
           if (!_isOver)
             _liveCode != null
@@ -334,16 +336,16 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                     ),
                   )
                 : IconButton(
-                    icon: const Icon(Icons.wifi_tethering, color: Colors.white54),
+                    icon: Icon(Icons.wifi_tethering, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
                     tooltip: 'Go Live',
                     onPressed: _goLive,
                   ),
         ],
         bottom: TabBar(
           controller: _tab,
-          labelColor: Colors.greenAccent,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: Colors.greenAccent,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+          indicatorColor: Theme.of(context).colorScheme.primary,
           tabs: const [Tab(text: 'Schedule'), Tab(text: 'Standings'), Tab(text: 'Squads'), Tab(text: 'Stats')],
         ),
       ),
@@ -379,8 +381,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     }
     final sections = _buildSections();
     if (sections.isEmpty) {
-      return const Center(
-          child: Text('No matches yet', style: TextStyle(color: Colors.white54)));
+      return Center(
+          child: Text('No matches yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))));
     }
     return ListView(
       padding: const EdgeInsets.all(12),
@@ -411,8 +413,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         Expanded(
           child: Text(
             '${seg.formatLabel} SERIES (${seg.playedCount}/${seg.matchCount})',
-            style: const TextStyle(
-                color: Colors.greenAccent,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.5),
@@ -430,8 +432,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             child: Text(
               winner.isEmpty ? 'TIED' : '$winner WON',
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 10,
                   fontWeight: FontWeight.bold),
             ),
@@ -536,8 +538,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
   Widget _sectionHeader(String title) => Padding(
         padding: const EdgeInsets.only(top: 8, bottom: 6),
         child: Text(title,
-            style: const TextStyle(
-                color: Colors.greenAccent,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.5)),
@@ -553,12 +555,12 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
             color: playable
-                ? Colors.greenAccent.withValues(alpha:0.35)
-                : Colors.white10),
+                ? Theme.of(context).colorScheme.primary.withValues(alpha:0.35)
+                : Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Row(children: [
         Expanded(
@@ -567,8 +569,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(match.phase,
-                    style: const TextStyle(
-                        color: Colors.white38,
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.2)),
@@ -579,10 +581,10 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         color: match.isPlayed && match.winnerName == match.team1Name
-                            ? Colors.greenAccent
+                            ? Theme.of(context).colorScheme.primary
                             : locked
-                                ? Colors.white38
-                                : Colors.white,
+                                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)
+                                : Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 13)),
               ),
@@ -590,7 +592,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text('vs',
                     style: TextStyle(
-                        color: locked ? Colors.white24 : Colors.white38,
+                        color: locked ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24) : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                         fontSize: 12)),
               ),
               Flexible(
@@ -598,10 +600,10 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         color: match.isPlayed && match.winnerName == match.team2Name
-                            ? Colors.greenAccent
+                            ? Theme.of(context).colorScheme.primary
                             : locked
-                                ? Colors.white38
-                                : Colors.white,
+                                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)
+                                : Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 13)),
               ),
@@ -609,7 +611,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             if (match.isPlayed) ...[
               const SizedBox(height: 4),
               Text(match.result!.matchResult,
-                  style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11)),
             ],
           ]),
         ),
@@ -618,8 +620,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
           ElevatedButton(
             onPressed: () => _playMatch(match),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               textStyle: const TextStyle(fontWeight: FontWeight.bold),
               shape: RoundedRectangleBorder(
@@ -628,7 +630,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             child: const Text('Play'),
           )
         else if (locked)
-          const Icon(Icons.lock_outline, color: Colors.white24, size: 20)
+          Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24), size: 20)
         else
           GestureDetector(
             onTap: () => Navigator.push(
@@ -640,13 +642,13 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white10,
+                color: Theme.of(context).colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.analytics_outlined, color: Colors.greenAccent, size: 14),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.analytics_outlined, color: Theme.of(context).colorScheme.primary, size: 14),
                 SizedBox(width: 4),
-                Text('Score', style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                Text('Score', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
               ]),
             ),
           ),
@@ -689,9 +691,9 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF0D2B1E),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white10),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -700,11 +702,11 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                       w1 > w2 && state.isComplete),
                   Column(children: [
                     Text('$played/${state.totalMatches}',
-                        style: const TextStyle(
-                            color: Colors.white54, fontSize: 13)),
-                    const Text('played',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13)),
+                    Text('played',
                         style:
-                            TextStyle(color: Colors.white38, fontSize: 11)),
+                            TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
                   ]),
                   _seriesTeamCol(state.teams[1].name, w2,
                       w2 > w1 && state.isComplete),
@@ -738,17 +740,17 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
   Widget _seriesTeamCol(String name, int wins, bool isWinner) => Column(children: [
         Text(name,
             style: TextStyle(
-                color: isWinner ? Colors.greenAccent : Colors.white,
+                color: isWinner ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
                 fontSize: 14)),
         const SizedBox(height: 8),
         Text('$wins',
             style: TextStyle(
-                color: isWinner ? Colors.greenAccent : Colors.white,
+                color: isWinner ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                 fontSize: 36,
                 fontWeight: FontWeight.bold)),
-        const Text('wins',
-            style: TextStyle(color: Colors.white54, fontSize: 12)),
+        Text('wins',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
       ]);
 
   Widget _buildBigTournamentStandings(BigTournamentState s) {
@@ -779,9 +781,9 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
   Widget _pointsTable(List<TeamStanding> standings) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Table(
         columnWidths: const {
@@ -796,7 +798,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         children: [
           TableRow(
             decoration:
-                BoxDecoration(color: Colors.green.shade900.withValues(alpha:0.5)),
+                BoxDecoration(color: Theme.of(context).colorScheme.surface),
             children: ['Team', 'P', 'W', 'L', 'T', 'NRR', 'Pts']
                 .map((h) => _th(h))
                 .toList(),
@@ -807,7 +809,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             return TableRow(
               decoration: BoxDecoration(
                   color: isFirst
-                      ? Colors.greenAccent.withValues(alpha:0.06)
+                      ? Theme.of(context).colorScheme.primary.withValues(alpha:0.06)
                       : e.key.isOdd
                           ? Colors.white.withValues(alpha:0.02)
                           : Colors.transparent),
@@ -818,7 +820,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                 _td('${s.lost}'),
                 _td('${s.tied}'),
                 _td(s.nrrDisplay,
-                    color: s.nrr >= 0 ? Colors.greenAccent : Colors.redAccent),
+                    color: s.nrr >= 0 ? Theme.of(context).colorScheme.primary : Colors.redAccent),
                 _td('${s.points}', bold: true),
               ],
             );
@@ -831,8 +833,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
   Widget _th(String text) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
         child: Text(text,
-            style: const TextStyle(
-                color: Colors.white54,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                 fontSize: 11,
                 fontWeight: FontWeight.bold)),
       );
@@ -842,7 +844,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         child: Text(text,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-                color: color ?? Colors.white,
+                color: color ?? Theme.of(context).colorScheme.onSurface,
                 fontSize: 12,
                 fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
       );
@@ -920,15 +922,15 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0D2B1E),
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(m.phase, style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                  Text(m.phase, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text('${m.winnerName} won', style: const TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.bold)),
-                  Text(m.result!.matchResult, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                  Text('${m.winnerName} won', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text(m.result!.matchResult, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11)),
                 ]),
               ),
             ),
@@ -981,10 +983,10 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                     letterSpacing: 0.8)),
             const SizedBox(height: 2),
             Text('${mott.playerName}  ·  ${mott.teamName}  ·  ${mott.roleLabel}',
-                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.bold)),
             if (mott.statsLine.isNotEmpty)
               Text(mott.statsLine,
-                  style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 11)),
           ]),
         ),
       ]),
@@ -1057,13 +1059,13 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
       // ── right table ───────────────────────────────────────────────────
       Expanded(
         child: allStats.isEmpty
-            ? const Center(
+            ? Center(
                 child: Padding(
                   padding: EdgeInsets.all(32),
                   child: Text(
                     'Play some matches to\nsee stats here',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13),
                   ),
                 ),
               )
@@ -1076,8 +1078,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         padding: const EdgeInsets.fromLTRB(10, 14, 10, 4),
         child: Text(
           label.toUpperCase(),
-          style: const TextStyle(
-              color: Colors.greenAccent,
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
               fontSize: 9,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.3),
@@ -1096,15 +1098,15 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
               ? const Color(0xFF1B5E20).withValues(alpha: 0.55)
               : Colors.transparent,
           border: sel
-              ? const Border(
-                  left: BorderSide(color: Colors.greenAccent, width: 3))
+              ? Border(
+                  left: BorderSide(color: Theme.of(context).colorScheme.primary, width: 3))
               : const Border(
                   left: BorderSide(color: Colors.transparent, width: 3)),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: sel ? Colors.white : Colors.white38,
+            color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
             fontSize: 11,
             fontWeight: sel ? FontWeight.bold : FontWeight.normal,
             height: 1.3,
@@ -1248,11 +1250,11 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     }
 
     if (sorted.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text('No data yet for this category',
-              style: TextStyle(color: Colors.white54, fontSize: 13)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13)),
         ),
       );
     }
@@ -1265,7 +1267,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
           child: Text(t,
               textAlign: TextAlign.right,
               style: TextStyle(
-                  color: prime ? Colors.greenAccent : Colors.white38,
+                  color: prime ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                   fontSize: 10,
                   fontWeight: FontWeight.bold)),
         );
@@ -1275,7 +1277,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
           child: Text(t,
               textAlign: TextAlign.right,
               style: TextStyle(
-                  color: prime ? Colors.greenAccent : Colors.white70,
+                  color: prime ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   fontSize: 12,
                   fontWeight: prime ? FontWeight.bold : FontWeight.normal)),
         );
@@ -1286,31 +1288,31 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
         color: const Color(0xFF0A2218),
         padding: const EdgeInsets.fromLTRB(8, 8, 10, 8),
         child: Row(children: [
-          const SizedBox(
+          SizedBox(
               width: 20,
               child: Text('#',
                   style: TextStyle(
-                      color: Colors.white38,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                       fontSize: 10,
                       fontWeight: FontWeight.bold))),
           const SizedBox(width: 6),
-          const Expanded(
+          Expanded(
               child: Text('PLAYER',
                   style: TextStyle(
-                      color: Colors.white38,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                       fontSize: 10,
                       fontWeight: FontWeight.bold))),
           for (int ci = 0; ci < headers.length; ci++)
             hCell(headers[ci], colW[ci], ci == primIdx),
         ]),
       ),
-      const Divider(height: 1, color: Colors.white10),
+      Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
       // Rows
       Expanded(
         child: ListView.separated(
           itemCount: sorted.length,
           separatorBuilder: (_, __) =>
-              const Divider(height: 1, color: Colors.white10),
+              Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
           itemBuilder: (_, i) {
             final p = sorted[i];
             final v = vals(p);
@@ -1324,7 +1326,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                   width: 20,
                   child: Text('${i + 1}',
                       style: TextStyle(
-                          color: i < 3 ? Colors.amber : Colors.white38,
+                          color: i < 3 ? Colors.amber : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                           fontSize: 11,
                           fontWeight:
                               i < 3 ? FontWeight.bold : FontWeight.normal)),
@@ -1337,14 +1339,14 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                       children: [
                         Text(p.name,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                color: Colors.white,
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold)),
                         Text(p.team,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                color: Colors.white38, fontSize: 10)),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 10)),
                       ]),
                 ),
                 for (int ci = 0; ci < v.length; ci++)
@@ -1362,8 +1364,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
   Widget _buildSquads() {
     final teams = _allTeams;
     if (teams.isEmpty) {
-      return const Center(
-          child: Text('No squads', style: TextStyle(color: Colors.white54)));
+      return Center(
+          child: Text('No squads', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54))));
     }
 
     // Clamp index in case teams shrink
@@ -1399,15 +1401,15 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
-                  color: sel ? Colors.greenAccent : Colors.transparent,
+                  color: sel ? Theme.of(context).colorScheme.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: sel ? Colors.greenAccent : Colors.white30),
+                      color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   teams[i].name,
                   style: TextStyle(
-                    color: sel ? const Color(0xFF0D2B1E) : Colors.white70,
+                    color: sel ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight:
                         sel ? FontWeight.bold : FontWeight.normal,
                     fontSize: 13,
@@ -1492,7 +1494,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
             color: isC
@@ -1507,7 +1509,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
           decoration: BoxDecoration(
             color: isC
                 ? Colors.amber.withValues(alpha: 0.18)
-                : Colors.white.withValues(alpha: 0.06),
+                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
             shape: BoxShape.circle,
             border: Border.all(
                 color: isC
@@ -1538,7 +1540,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                       isC ? '${p.name} (C)' : p.name,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: isC ? Colors.amber : Colors.white,
+                        color: isC ? Colors.amber : Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -1553,9 +1555,9 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                         color: const Color(0xFF1565C0),
                         borderRadius: BorderRadius.circular(3),
                       ),
-                      child: const Text('WK',
+                      child: Text('WK',
                           style: TextStyle(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 8,
                               fontWeight: FontWeight.bold)),
                     ),
@@ -1563,8 +1565,8 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
                 ]),
                 const SizedBox(height: 2),
                 Text(_roleLabel(p),
-                    style: const TextStyle(
-                        color: Colors.white54, fontSize: 11)),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 11)),
               ]),
         ),
       ]),
@@ -1595,9 +1597,9 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(children: [
         Row(
@@ -1606,9 +1608,9 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             _seriesTeamCol(seg.team1Name, w1, winner == seg.team1Name),
             Column(mainAxisSize: MainAxisSize.min, children: [
               Text('${seg.playedCount}/${seg.matchCount}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 13)),
               Text(seg.isComplete ? 'complete' : 'played',
-                  style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
               if (seg.ties > 0) ...[
                 const SizedBox(height: 4),
                 Text('${seg.ties} tied',
@@ -1626,13 +1628,13 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen>
             decoration: BoxDecoration(
               color: winner.isEmpty
                   ? Colors.grey.shade800.withValues(alpha: 0.3)
-                  : Colors.green.shade800.withValues(alpha: 0.3),
+                  : Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(seg.resultText,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: Colors.white70,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight: FontWeight.bold,
                     fontSize: 12)),
           ),

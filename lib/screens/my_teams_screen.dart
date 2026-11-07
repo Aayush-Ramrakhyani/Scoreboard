@@ -11,15 +11,13 @@ class MyTeamsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('My Teams',
+        title: Text('My Teams',
             style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold)),
+                color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: Colors.greenAccent),
+            icon: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
             tooltip: 'New team',
             onPressed: () => _openEditor(context, null),
           ),
@@ -29,9 +27,9 @@ class MyTeamsScreen extends StatelessWidget {
         stream: FirebaseService.teamsStream(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
                 child: CircularProgressIndicator(
-                    color: Colors.greenAccent));
+                    color: Theme.of(context).colorScheme.primary));
           }
           if (snap.hasError) {
             return Center(
@@ -51,8 +49,8 @@ class MyTeamsScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(context, null),
-        backgroundColor: Colors.green.shade700,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         icon: const Icon(Icons.group_add),
         label: const Text('New Team'),
       ),
@@ -61,13 +59,13 @@ class MyTeamsScreen extends StatelessWidget {
 
   Widget _emptyState(BuildContext context) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.group_add, color: Colors.white12, size: 64),
+          Icon(Icons.group_add, color: Theme.of(context).colorScheme.outlineVariant, size: 64),
           const SizedBox(height: 18),
-          const Text('No saved teams yet',
-              style: TextStyle(color: Colors.white54, fontSize: 17)),
+          Text('No saved teams yet',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 17)),
           const SizedBox(height: 8),
-          const Text('Create a team once, load it in any tournament',
-              style: TextStyle(color: Colors.white30, fontSize: 13)),
+          Text('Create a team once, load it in any tournament',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 13)),
         ]),
       );
 
@@ -86,9 +84,9 @@ class MyTeamsScreen extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2B1E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Header row
@@ -100,8 +98,8 @@ class MyTeamsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(team.name,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 16,
                             fontWeight: FontWeight.bold)),
                     if (captain.isNotEmpty)
@@ -111,8 +109,8 @@ class MyTeamsScreen extends StatelessWidget {
                   ]),
             ),
             IconButton(
-              icon: const Icon(Icons.edit_outlined,
-                  color: Colors.greenAccent, size: 20),
+              icon: Icon(Icons.edit_outlined,
+                  color: Theme.of(context).colorScheme.primary, size: 20),
               onPressed: () => _openEditor(context, team),
             ),
             IconButton(
@@ -126,7 +124,7 @@ class MyTeamsScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
           child: Wrap(spacing: 6, runSpacing: 6, children: [
-            _chip('${team.players.length} players', Colors.white24),
+            _chip('${team.players.length} players', Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
             if (batters > 0) _chip('$batters Bat', const Color(0xFF388E3C)),
             if (wks > 0) _chip('$wks WK', const Color(0xFF1565C0)),
             if (arounders > 0)
@@ -147,7 +145,7 @@ class MyTeamsScreen extends StatelessWidget {
           border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
         child: Text(label,
-            style: const TextStyle(color: Colors.white70, fontSize: 11)),
+            style: TextStyle(color: color, fontSize: 11)),
       );
 
   void _openEditor(BuildContext context, SavedTeam? team) =>
@@ -163,16 +161,15 @@ class MyTeamsScreen extends StatelessWidget {
     final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF0D2B1E),
-            title: const Text('Delete Team',
-                style: TextStyle(color: Colors.white)),
+                title: Text('Delete Team',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             content: Text('Delete "${team.name}"?\nThis cannot be undone.',
-                style: const TextStyle(color: Colors.white70)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: Colors.white54))),
+                  child: Text('Cancel',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)))),
               TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: const Text('Delete',
@@ -259,24 +256,22 @@ class _TeamEditorScreenState extends State<TeamEditorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
         title: Text(_isEditing ? 'Edit Team' : 'New Team',
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
             child: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                        color: Colors.greenAccent, strokeWidth: 2))
-                : const Text('Save',
+                        color: Theme.of(context).colorScheme.primary, strokeWidth: 2))
+                : Text('Save',
                     style: TextStyle(
-                        color: Colors.greenAccent,
+                        color: Theme.of(context).colorScheme.primary,
                         fontSize: 15,
                         fontWeight: FontWeight.bold)),
           ),
@@ -285,32 +280,32 @@ class _TeamEditorScreenState extends State<TeamEditorScreen> {
       body: Column(children: [
         // Team name + player count bar
         Container(
-          color: const Color(0xFF0D2B1E),
+          color: Theme.of(context).colorScheme.surface,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Row(children: [
             Expanded(
               child: TextField(
                 controller: _nameCtrl,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
                   hintText: 'Team name',
                   hintStyle:
-                      const TextStyle(color: Colors.white38),
-                  prefixIcon: const Icon(Icons.shield_outlined,
-                      color: Colors.greenAccent, size: 20),
+                      TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)),
+                  prefixIcon: Icon(Icons.shield_outlined,
+                      color: Theme.of(context).colorScheme.primary, size: 20),
                   enabledBorder: OutlineInputBorder(
                     borderSide:
-                        BorderSide(color: Colors.green.shade800),
+                        BorderSide(color: Theme.of(context).colorScheme.surface),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                        color: Colors.greenAccent, width: 1.5),
+                    borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary, width: 1.5),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   filled: true,
-                  fillColor: const Color(0xFF1B3A2D),
+                  fillColor: Theme.of(context).scaffoldBackgroundColor,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 12),
@@ -328,7 +323,7 @@ class _TeamEditorScreenState extends State<TeamEditorScreen> {
         Expanded(
           child: SquadEntryWidget(
             players: _players,
-            accentColor: Colors.green.shade700,
+            accentColor: Theme.of(context).colorScheme.primary,
             onAddPlayer: _players.length < 21
                 ? () => setState(() => _players
                     .add(PlayerSetupData('Player ${_players.length + 1}')))
@@ -366,14 +361,14 @@ class _TeamEditorScreenState extends State<TeamEditorScreen> {
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: sel ? Colors.green.shade700 : Colors.white10,
+          color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-              color: sel ? Colors.greenAccent : Colors.white24),
+              color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
         ),
         child: Text('$n',
             style: TextStyle(
-                color: sel ? Colors.white : Colors.white54,
+                color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                 fontWeight: sel ? FontWeight.bold : FontWeight.normal,
                 fontSize: 13)),
       ),

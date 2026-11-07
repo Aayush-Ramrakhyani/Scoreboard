@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/firebase_service.dart';
 import 'mode_select_screen.dart';
 
+/// Entry point for authentication — supports Google Sign-In, email/password
+/// login, and new account registration. Navigates to [ModeSelectScreen] on success.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
@@ -78,27 +80,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Header ──────────────────────────────────────────────
-                  const Icon(Icons.sports_cricket,
-                      color: Colors.greenAccent, size: 58),
+                  Icon(Icons.sports_cricket, color: cs.onSurface, size: 58),
                   const SizedBox(height: 14),
-                  const Text(
+                  Text(
                     'Cricket Scoreboard',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        color: Colors.white,
+                        color: cs.onSurface,
                         fontSize: 24,
                         fontWeight: FontWeight.bold),
                   ),
@@ -111,20 +110,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           : 'Sign in to continue',
                       key: ValueKey(_isRegister),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 13),
+                      style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.55),
+                          fontSize: 13),
                     ),
                   ),
                   const SizedBox(height: 36),
-
-                  // ── Google Sign-In ───────────────────────────────────────
-                  _googleBtn(),
+                  _googleBtn(cs),
                   const SizedBox(height: 20),
-                  _orDivider(),
+                  _orDivider(cs),
                   const SizedBox(height: 20),
-
-                  // ── Email ────────────────────────────────────────────────
                   _inputField(
+                    cs: cs,
                     ctrl: _emailCtrl,
                     label: 'Email',
                     icon: Icons.email_outlined,
@@ -132,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 12),
                   _inputField(
+                    cs: cs,
                     ctrl: _passCtrl,
                     label: 'Password',
                     icon: Icons.lock_outline,
@@ -141,41 +139,31 @@ class _LoginScreenState extends State<LoginScreen> {
                           _obscure
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: Colors.white38,
+                          color: cs.onSurface.withValues(alpha: 0.45),
                           size: 20),
                       onPressed: () =>
                           setState(() => _obscure = !_obscure),
                     ),
                   ),
                   const SizedBox(height: 22),
-
                   ElevatedButton(
                     onPressed: _loading ? null : _emailAction,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor:
-                          Colors.green.shade900,
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       textStyle: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.bold),
                     ),
                     child: _loading
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 18,
                             width: 18,
                             child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2))
-                        : Text(_isRegister
-                            ? 'Create Account'
-                            : 'Sign In'),
+                                color: cs.onPrimary, strokeWidth: 2))
+                        : Text(_isRegister ? 'Create Account' : 'Sign In'),
                   ),
                   const SizedBox(height: 16),
-
-                  // Toggle register / login
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -183,16 +171,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         _isRegister
                             ? 'Already have an account?'
                             : "Don't have an account?",
-                        style: const TextStyle(
-                            color: Colors.white54, fontSize: 13),
+                        style: TextStyle(
+                            color: cs.onSurface.withValues(alpha: 0.55),
+                            fontSize: 13),
                       ),
                       TextButton(
                         onPressed: () =>
                             setState(() => _isRegister = !_isRegister),
                         child: Text(
                           _isRegister ? 'Sign In' : 'Register',
-                          style: const TextStyle(
-                              color: Colors.greenAccent,
+                          style: TextStyle(
+                              color: cs.primary,
                               fontSize: 13,
                               fontWeight: FontWeight.bold),
                         ),
@@ -208,14 +197,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _googleBtn() => OutlinedButton(
+  Widget _googleBtn(ColorScheme cs) => OutlinedButton(
         onPressed: _loading ? null : _googleSignIn,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Colors.white24),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12)),
-          backgroundColor: Colors.white.withValues(alpha: 0.04),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -224,38 +211,41 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.onSurface,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Center(
+              child: Center(
                 child: Text('G',
                     style: TextStyle(
-                        color: Color(0xFF4285F4),
+                        color: cs.surface,
                         fontSize: 14,
                         fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(width: 12),
-            const Text('Continue with Google',
-                style: TextStyle(color: Colors.white70, fontSize: 15)),
+            Text('Continue with Google',
+                style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.8), fontSize: 15)),
           ],
         ),
       );
 
-  Widget _orDivider() => Row(children: [
-        const Expanded(child: Divider(color: Colors.white12)),
+  Widget _orDivider(ColorScheme cs) => Row(children: [
+        Divider(color: cs.outlineVariant, endIndent: 0),
+        Expanded(child: Divider(color: cs.outlineVariant)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text('OR',
               style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.28),
+                  color: cs.onSurface.withValues(alpha: 0.35),
                   fontSize: 11,
                   letterSpacing: 1)),
         ),
-        const Expanded(child: Divider(color: Colors.white12)),
+        Expanded(child: Divider(color: cs.outlineVariant)),
       ]);
 
   Widget _inputField({
+    required ColorScheme cs,
     required TextEditingController ctrl,
     required String label,
     required IconData icon,
@@ -267,23 +257,11 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: ctrl,
         obscureText: obscure,
         keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: cs.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.white54),
-          prefixIcon: Icon(icon, color: Colors.white38, size: 20),
+          prefixIcon: Icon(icon, size: 20),
           suffixIcon: suffix,
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.green.shade800),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-                color: Colors.greenAccent, width: 1.5),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          filled: true,
-          fillColor: const Color(0xFF0D2B1E),
         ),
       );
 }

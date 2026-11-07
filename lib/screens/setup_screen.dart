@@ -22,6 +22,9 @@ class _PlayerSetup {
 }
 
 // ── screen ────────────────────────────────────────────────────────────────────
+
+/// Quick-match setup: configure two teams with up to 11 players, pick format,
+/// overs, and pitch. Navigates to [TossScreen] when both teams are ready.
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
   @override
@@ -151,9 +154,9 @@ class _SetupScreenState extends State<SetupScreen>
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF0D2B1E),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white12),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
               ),
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -165,34 +168,34 @@ class _SetupScreenState extends State<SetupScreen>
                       radius: 14,
                       backgroundColor: accentColor,
                       child: Text('${i + 1}',
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.white)),
+                          style: TextStyle(
+                              fontSize: 11, color: Theme.of(context).colorScheme.onSurface)),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: p.nameCtrl,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 14),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                         decoration: InputDecoration(
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 8),
                           hintText: 'Player name',
                           hintStyle:
-                              const TextStyle(color: Colors.white30),
+                              TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
                           enabledBorder: OutlineInputBorder(
                             borderSide:
-                                BorderSide(color: Colors.green.shade800),
+                                BorderSide(color: Theme.of(context).colorScheme.surface),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                                color: Colors.greenAccent, width: 1.5),
+                            borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.primary, width: 1.5),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFF1B3A2D),
+                          fillColor: Theme.of(context).scaffoldBackgroundColor,
                         ),
                       ),
                     ),
@@ -255,9 +258,9 @@ class _SetupScreenState extends State<SetupScreen>
                   if (p.needsBowlerType) ...[
                     const SizedBox(height: 8),
                     Row(children: [
-                      const Text('Type:',
+                      Text('Type:',
                           style: TextStyle(
-                              color: Colors.white54, fontSize: 12)),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54), fontSize: 12)),
                       const SizedBox(width: 8),
                       _bowlerTypeChip(
                           p, BowlerType.fast, 'Fast', setSt),
@@ -268,7 +271,7 @@ class _SetupScreenState extends State<SetupScreen>
                   ],
 
                   const SizedBox(height: 10),
-                  const Divider(color: Colors.white12, height: 1),
+                  Divider(color: Theme.of(context).colorScheme.outlineVariant, height: 1),
                   const SizedBox(height: 10),
 
                   // ── designations ──────────────────────────────────────
@@ -321,8 +324,8 @@ class _SetupScreenState extends State<SetupScreen>
   // ── chip builders ─────────────────────────────────────────────────────────
 
   Widget _sectionLabel(String text) => Text(text,
-      style: const TextStyle(
-          color: Colors.white38,
+      style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
           fontSize: 10,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.5));
@@ -342,18 +345,18 @@ class _SetupScreenState extends State<SetupScreen>
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? color : Colors.white10,
+          color: selected ? color : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: selected ? color : dim ? Colors.white10 : Colors.white24),
+              color: selected ? color : dim ? Theme.of(context).colorScheme.outlineVariant : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
         ),
         child: Text(label,
             style: TextStyle(
                 color: selected
                     ? Colors.white
                     : dim
-                        ? Colors.white24
-                        : Colors.white60,
+                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
       ),
@@ -371,13 +374,13 @@ class _SetupScreenState extends State<SetupScreen>
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          color: sel ? color : Colors.white10,
+          color: sel ? color : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: sel ? color : Colors.white24),
+          border: Border.all(color: sel ? color : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
         ),
         child: Text(label,
             style: TextStyle(
-                color: sel ? Colors.white : Colors.white60,
+                color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 fontSize: 12,
                 fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
       ),
@@ -398,14 +401,14 @@ class _SetupScreenState extends State<SetupScreen>
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? color.withValues(alpha:0.85) : Colors.white10,
+          color: active ? color.withValues(alpha:0.85) : Theme.of(context).colorScheme.outlineVariant,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: active
                   ? color
                   : disabled
-                      ? Colors.white10
-                      : Colors.white24),
+                      ? Theme.of(context).colorScheme.outlineVariant
+                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -415,16 +418,16 @@ class _SetupScreenState extends State<SetupScreen>
                 color: active
                     ? Colors.white
                     : disabled
-                        ? Colors.white24
-                        : Colors.white54),
+                        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54)),
             const SizedBox(width: 5),
             Text(label,
                 style: TextStyle(
                     color: active
                         ? Colors.white
                         : disabled
-                            ? Colors.white24
-                            : Colors.white60,
+                            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)
+                            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: 12,
                     fontWeight: active ? FontWeight.bold : FontWeight.normal)),
           ],
@@ -440,8 +443,8 @@ class _SetupScreenState extends State<SetupScreen>
           borderRadius: BorderRadius.circular(5),
         ),
         child: Text(label,
-            style: const TextStyle(
-                color: Colors.white,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 9,
                 fontWeight: FontWeight.bold)),
       );
@@ -482,17 +485,15 @@ class _SetupScreenState extends State<SetupScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B3A2D),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2B1E),
-        title: const Text('Cricket Scoreboard Setup',
+        title: Text('Cricket Scoreboard Setup',
             style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.greenAccent,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: Colors.greenAccent,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+          indicatorColor: Theme.of(context).colorScheme.primary,
           tabs: const [
             Tab(text: 'Match Info'),
             Tab(text: 'Team 1 Players'),
@@ -520,8 +521,8 @@ class _SetupScreenState extends State<SetupScreen>
                 ElevatedButton(
                   onPressed: _startMatch,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onSurface,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     textStyle: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
@@ -534,10 +535,10 @@ class _SetupScreenState extends State<SetupScreen>
             ),
           ),
           Column(children: [
-            _teamHeader(_team1NameCtrl, Colors.green.shade700, _team1),
+            _teamHeader(_team1NameCtrl, Theme.of(context).colorScheme.primary, _team1),
             Expanded(
                 child:
-                    _buildPlayerList(_team1, Colors.green.shade700)),
+                    _buildPlayerList(_team1, Theme.of(context).colorScheme.primary)),
           ]),
           Column(children: [
             _teamHeader(_team2NameCtrl, Colors.blue.shade700, _team2),
@@ -553,20 +554,20 @@ class _SetupScreenState extends State<SetupScreen>
   Widget _infoCard() => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.green.shade900.withValues(alpha:0.5),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.greenAccent.withValues(alpha:0.3)),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
               Icon(Icons.sports_cricket,
-                  color: Colors.greenAccent, size: 26),
+                  color: Theme.of(context).colorScheme.primary, size: 26),
               SizedBox(width: 10),
               Text('Match Setup',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                       fontSize: 15)),
             ]),
@@ -577,7 +578,7 @@ class _SetupScreenState extends State<SetupScreen>
               '• Wicket Keeper designation forces Batter role\n'
               '• Only one WK and one Captain per team',
               style: TextStyle(
-                  color: Colors.white60, fontSize: 13, height: 1.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, height: 1.6),
             ),
           ],
         ),
@@ -593,9 +594,9 @@ class _SetupScreenState extends State<SetupScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('MATCH FORMAT',
+        Text('MATCH FORMAT',
             style: TextStyle(
-                color: Colors.white54,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.5)),
@@ -610,28 +611,28 @@ class _SetupScreenState extends State<SetupScreen>
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: sel
-                    ? Colors.green.shade800.withValues(alpha:0.35)
-                    : const Color(0xFF0D2B1E),
+                    ? Theme.of(context).colorScheme.surface
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: sel ? Colors.greenAccent : Colors.white24),
+                    color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
               ),
               child: Row(children: [
                 Icon(
                     sel ? Icons.radio_button_checked : Icons.radio_button_off,
-                    color: sel ? Colors.greenAccent : Colors.white38,
+                    color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
                     size: 20),
                 const SizedBox(width: 12),
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(f.$2,
                       style: TextStyle(
-                          color: sel ? Colors.white : Colors.white70,
+                          color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           fontWeight:
                               sel ? FontWeight.bold : FontWeight.normal,
                           fontSize: 14)),
                   Text(f.$3,
-                      style: const TextStyle(
-                          color: Colors.white38, fontSize: 11)),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38), fontSize: 11)),
                 ]),
               ]),
             ),
@@ -639,9 +640,9 @@ class _SetupScreenState extends State<SetupScreen>
         }),
         if (_format == MatchFormat.test) ...[
           const SizedBox(height: 8),
-          const Text('NUMBER OF DAYS',
+          Text('NUMBER OF DAYS',
               style: TextStyle(
-                  color: Colors.white54,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5)),
@@ -656,14 +657,14 @@ class _SetupScreenState extends State<SetupScreen>
                   duration: const Duration(milliseconds: 150),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: sel ? Colors.green.shade800 : const Color(0xFF0D2B1E),
+                    color: sel ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: sel ? Colors.greenAccent : Colors.white24),
+                        color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24)),
                   ),
                   child: Text('$d days',
                       style: TextStyle(
-                          color: sel ? Colors.white : Colors.white60,
+                          color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           fontWeight:
                               sel ? FontWeight.bold : FontWeight.normal)),
                 ),
@@ -680,22 +681,22 @@ class _SetupScreenState extends State<SetupScreen>
     return TextField(
       controller: ctrl,
       keyboardType: numeric ? TextInputType.number : TextInputType.text,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white60),
-        prefixIcon: Icon(icon, color: Colors.greenAccent),
+        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+        prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
         enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.green.shade700),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
           borderRadius: BorderRadius.circular(10),
         ),
         focusedBorder: OutlineInputBorder(
           borderSide:
-              const BorderSide(color: Colors.greenAccent, width: 2),
+              BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
           borderRadius: BorderRadius.circular(10),
         ),
         filled: true,
-        fillColor: const Color(0xFF0D2B1E),
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }
@@ -711,13 +712,13 @@ class _SetupScreenState extends State<SetupScreen>
             Expanded(
               child: Text(
                 ctrl.text.isEmpty ? 'Team' : ctrl.text,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
             TextButton.icon(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white70,
+                foregroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

@@ -1,9 +1,18 @@
+// Core data models shared across the entire app.
+// Enums, immutable value objects, and mutable game-state classes live here.
+
 import 'package:flutter/material.dart';
 
+/// Batting/bowling/all-round role of a player.
 enum PlayerRole { batter, bowler, allRounder }
+
+/// Sub-type for bowlers and all-rounders.
 enum BowlerType { fast, spin }
+
+/// Match format — determines default overs, powerplay rules, and innings count.
 enum MatchFormat { t10, t20, odi, hundred, test }
 
+/// Snapshot of the score at the moment a wicket fell.
 class FallOfWicket {
   final int wicketNumber;
   final int score;
@@ -17,6 +26,7 @@ class FallOfWicket {
   });
 }
 
+/// Runs and balls for a single batting partnership between two players.
 class PartnershipEntry {
   final String bat1Name;
   final int bat1Runs;
@@ -38,6 +48,7 @@ class PartnershipEntry {
   });
 }
 
+/// Immutable player descriptor used in squads and templates.
 class PlayerInfo {
   final String name;
   final PlayerRole role;
@@ -54,6 +65,7 @@ class PlayerInfo {
   });
 }
 
+/// Mutable per-player live state tracked during a match (runs, balls, wickets, etc.).
 class Player {
   String name;
   PlayerRole role;
@@ -142,6 +154,7 @@ class Player {
   }
 }
 
+/// Live state for one innings: score, overs, current batters/bowler, and history.
 class Innings {
   final List<Player> battingTeamPlayers;
   final List<Player> bowlingTeamPlayers;
@@ -242,6 +255,7 @@ class Innings {
   bool get isOverComplete => balls % 6 == 0 && balls > 0;
 }
 
+/// Immutable(ish) configuration chosen before the match starts (teams, format, overs).
 class MatchSetup {
   String team1Name;
   String team2Name;
@@ -298,6 +312,9 @@ class MatchSetup {
   }
 }
 
+/// Top-level mutable state for an entire match: holds all innings, tracks
+/// the current batting/bowling order, DLS target, super-over state, and the
+/// final result. Serialized to JSON for mid-match save/resume.
 class MatchState {
   final MatchSetup setup;
   late List<Player> team1Players;

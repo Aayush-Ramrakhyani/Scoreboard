@@ -4,6 +4,9 @@ import '../models.dart';
 import '../tournament_models.dart';
 import '../services/motm_service.dart';
 
+/// Summary record for a completed match or tournament shown in [HistoryScreen].
+/// Stored locally in [SharedPreferences] and also synced to Firestore for
+/// cloud-backed tournament entries ([firestoreId] is non-null in that case).
 class HistoryEntry {
   final String id;
   final String? firestoreId; // non-null for Firestore-backed tournament entries
@@ -48,6 +51,8 @@ class HistoryEntry {
       );
 }
 
+/// CRUD operations for the local history list stored in [SharedPreferences].
+/// Capped at [_maxEntries] to prevent unbounded storage growth.
 class HistoryDatabase {
   static const _kHistory = 'match_history';
   static const _maxEntries = 200;

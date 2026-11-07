@@ -1,6 +1,7 @@
 import '../models.dart';
 import '../tournament_models.dart';
 
+/// The result of a Man of the Match calculation — who won and their key stats.
 class MotmResult {
   final String playerName;
   final String teamName;
@@ -27,6 +28,8 @@ class MotmResult {
   }
 }
 
+/// Calculates Man of the Match (and Man of the Tournament) using a weighted
+/// point system: runs, strike rate, wickets, economy rate, catches, etc.
 class MotmService {
   // ── Per-match scoring ─────────────────────────────────────────────────────
 

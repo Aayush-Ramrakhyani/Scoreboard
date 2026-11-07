@@ -5,6 +5,9 @@ import '../models.dart';
 import '../tournament_models.dart';
 import '../database/app_database.dart';
 
+/// Manages real-time live-scoring sessions via Firestore.
+/// Generates a 6-character share code, publishes compact score "ticks" on each
+/// ball, and streams updates to spectators watching via [WatchLiveScreen].
 class LiveSessionService {
   static const _col = 'live';
 
@@ -17,6 +20,7 @@ class LiveSessionService {
   static CollectionReference<Map<String, dynamic>> get _ref =>
       FirebaseFirestore.instance.collection(_col);
 
+  // Excludes visually ambiguous chars (0/O, 1/I) to avoid mis-typing the code.
   static String generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final rand = Random.secure();

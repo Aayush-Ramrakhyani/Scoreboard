@@ -3,6 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models.dart';
 import '../tournament_models.dart';
 
+/// Local persistence layer backed by [SharedPreferences].
+/// Saves/loads a single in-progress match and a single in-progress tournament
+/// so the user can quit and resume without losing state.
 class AppDatabase {
   static const _kMatch = 'match_save';
   static const _kTournType = 'tourn_type';

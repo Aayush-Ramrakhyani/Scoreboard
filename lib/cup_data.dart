@@ -1,7 +1,12 @@
+// Static data for international cup tournaments.
+// Contains full 30-player squad pools for all 20 T20 World Cup nations.
+// teamsFor() randomly picks 18 players per team each time a new cup is created.
+
 import 'dart:math';
 import 'models.dart';
 import 'tournament_models.dart';
 
+// ── Player factory helpers ────────────────────────────────────────────────────
 PlayerInfo _bat(String name, {bool c = false}) =>
     PlayerInfo(name: name, role: PlayerRole.batter, isCaptain: c);
 
@@ -28,6 +33,7 @@ const _t20WcTeams = [
   'USA', 'UAE', 'Oman', 'Namibia', 'Papua New Guinea',
 ];
 
+/// Static registry of international squads and cup configurations.
 class CupData {
   // Full squad pool per team (30 players). Captain is always first.
   // teamsFor() randomly picks 18 for each new tournament.

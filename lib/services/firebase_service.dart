@@ -5,6 +5,7 @@ import '../models.dart';
 
 // ── SavedTeam model ───────────────────────────────────────────────────────────
 
+/// A team document stored in Firestore under the user's account.
 class SavedTeam {
   final String id;
   final String name;
@@ -57,6 +58,8 @@ PlayerInfo _piFromJson(Map<String, dynamic> m) => PlayerInfo(
 
 // ── Service ───────────────────────────────────────────────────────────────────
 
+/// Facade for all Firebase operations: Google/email auth and Firestore
+/// team CRUD. All methods are static so callers need no instance.
 class FirebaseService {
   static final _auth = FirebaseAuth.instance;
   static final _db = FirebaseFirestore.instance;

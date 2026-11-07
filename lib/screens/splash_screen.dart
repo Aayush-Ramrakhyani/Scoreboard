@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'mode_select_screen.dart';
 
+/// Animated launch screen shown while Firebase initialises. Plays a staggered
+/// icon-drop + text-reveal sequence, then routes to [LoginScreen] or
+/// [ModeSelectScreen] depending on whether the user is already signed in.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 

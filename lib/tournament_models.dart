@@ -1,13 +1,18 @@
+// Tournament-specific data models: teams, matches, standings, and the
+// sealed AnyTournament union that wraps every tournament type the app supports.
+
 import 'dart:math';
 import 'models.dart';
 export 'models.dart' show MatchFormat;
 
+/// A team registered in a tournament, carrying its full squad.
 class TournamentTeam {
   final String name;
   final List<PlayerInfo> players;
   const TournamentTeam({required this.name, required this.players});
 }
 
+/// A single fixture in a tournament. [result] is null until the match is played.
 class TournamentMatch {
   final String team1Name;
   final String team2Name;
@@ -25,6 +30,7 @@ class TournamentMatch {
   bool get isTie => isPlayed && winnerName.isEmpty;
 }
 
+/// Points-table row for one team: W/L/T, run-rate, and total points.
 class TeamStanding {
   final String teamName;
   int played = 0, won = 0, lost = 0, tied = 0;
@@ -177,6 +183,7 @@ List<TournamentMatch> _buildSchedule(List<TournamentGroup> groups, int seed) {
 
 // ── Series ────────────────────────────────────────────────────────────────────
 
+/// Full state for a bilateral series (all matches + standings).
 class SeriesState {
   final List<TournamentTeam> teams;
   final int overs;
@@ -223,6 +230,7 @@ class SeriesState {
 
 // ── Tri-Series ────────────────────────────────────────────────────────────────
 
+/// Full state for a tri-nation series (round-robin + final).
 class TriSeriesState {
   final List<TournamentTeam> teams;
   final int overs;
@@ -279,6 +287,7 @@ class TriSeriesState {
 
 // ── Big Tournament ────────────────────────────────────────────────────────────
 
+/// Full state for a custom big tournament (groups + knockout rounds).
 class BigTournamentState {
   final List<TournamentTeam> teams;
   final int overs;
@@ -482,6 +491,7 @@ class FormatSegment {
   }
 }
 
+/// Full state for a multi-format series (e.g. 2 Tests + 3 ODIs + 3 T20Is).
 class MultiFormatSeriesState {
   final List<TournamentTeam> teams;
   final List<FormatSegment> segments;
@@ -536,6 +546,7 @@ class MultiFormatSeriesState {
 
 enum CupType { odiWorldCup, t20WorldCup, asiaCup, championsTrophy }
 
+/// Full state for an international cup (groups + knockout + final).
 class InternationalCupState {
   final CupType cupType;
   final List<TournamentTeam> teams;

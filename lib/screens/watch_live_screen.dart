@@ -8,6 +8,8 @@ import '../widgets/pulsing_dot.dart';
 
 // ── Entry screen ──────────────────────────────────────────────────────────────
 
+/// Entry point for spectators: accepts a 6-character live code and streams
+/// real-time score ticks from Firestore published by [LiveSessionService].
 class WatchLiveScreen extends StatefulWidget {
   const WatchLiveScreen({super.key});
   @override
@@ -251,7 +253,7 @@ class _MatchLiveScaffold extends StatelessWidget {
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
             indicatorColor: Theme.of(context).colorScheme.primary,
-            tabs: [
+            tabs: const [
               Tab(text: 'Live Score'),
               Tab(text: 'Scorecard'),
               Tab(text: 'Squad'),
@@ -348,7 +350,7 @@ class _TournamentLiveScaffold extends StatelessWidget {
             indicatorColor: Theme.of(context).colorScheme.primary,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            tabs: [
+            tabs: const [
               Tab(text: 'Score'),
               Tab(text: 'Points Table'),
               Tab(text: 'Stats'),

@@ -5,6 +5,8 @@ import 'squad_entry.dart';
 
 // ── My Teams list ─────────────────────────────────────────────────────────────
 
+/// Displays the user's saved Firestore teams. Allows adding new teams or
+/// editing/deleting existing ones via [SquadEntrySheet].
 class MyTeamsScreen extends StatelessWidget {
   const MyTeamsScreen({super.key});
 

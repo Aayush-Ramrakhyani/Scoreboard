@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// A small circle that fades in and out repeatedly to indicate a live session.
+/// Used next to the broadcast code in [MatchScreen] and [TournamentHomeScreen].
 class PulsingDot extends StatefulWidget {
   final Color color;
   final double size;

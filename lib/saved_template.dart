@@ -1,8 +1,12 @@
 import 'models.dart';
 import 'tournament_models.dart';
 
+// Serializable data models for saved match/series templates.
+// Templates cache squad and format config so users can replay fixtures quickly.
+
 // ── Team inside a template ────────────────────────────────────────────────────
 
+/// A team snapshot stored inside a [SavedTemplate] (name + player list).
 class TemplateTeam {
   String name;
   List<PlayerInfo> players;
@@ -43,6 +47,7 @@ class TemplateTeam {
 
 // ── Segment config (multi-format series) ─────────────────────────────────────
 
+/// One format block within a multi-format series template (e.g. "3 T20Is").
 class TemplateSegment {
   MatchFormat format;
   int matchCount;
@@ -76,6 +81,8 @@ class TemplateSegment {
 
 // ── Main template ─────────────────────────────────────────────────────────────
 
+/// Top-level template persisted to Firestore. [type] discriminates which setup
+/// screen the template belongs to (series, tri-series, tournament, multi-format).
 class SavedTemplate {
   String id;
   String name;

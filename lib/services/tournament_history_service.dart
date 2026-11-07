@@ -4,6 +4,8 @@ import '../tournament_models.dart';
 import '../database/app_database.dart';
 import '../database/history_database.dart';
 
+/// Persists tournament snapshots to Firestore so they can be resumed on any
+/// device. Upserts after every match and marks [isComplete] when the tournament ends.
 class TournamentHistoryService {
   static CollectionReference<Map<String, dynamic>> _col() {
     final uid = FirebaseAuth.instance.currentUser!.uid;

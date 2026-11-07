@@ -2,6 +2,8 @@ import 'dart:math';
 import '../models.dart';
 import '../tournament_models.dart';
 
+/// Generates a statistically plausible [MatchState] without user input.
+/// Used to simulate unplayed fixtures so tournaments can progress automatically.
 class MatchSimulator {
   static final _rand = Random();
 

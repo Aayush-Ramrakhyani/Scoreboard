@@ -4,6 +4,8 @@ import '../saved_template.dart';
 import '../tournament_models.dart';
 import '../database/app_database.dart';
 
+/// Saves and loads [SavedTemplate] documents from the user's Firestore sub-collection.
+/// Templates allow quick re-setup of frequently played fixtures.
 class TemplateService {
   static CollectionReference<Map<String, dynamic>> _col() {
     final uid = FirebaseAuth.instance.currentUser!.uid;

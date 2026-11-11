@@ -215,9 +215,11 @@ Pull requests are welcome. For major changes please open an issue first to discu
 
 ---
 
-## 📄 License
+## 📌 Project Ownership & Enquiries
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This is a personal project developed and maintained by me.
+
+If you're interested in purchasing this project or acquiring the rights to use it commercially, feel free to contact me to discuss the details.
 
 ---
 
